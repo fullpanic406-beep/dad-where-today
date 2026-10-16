@@ -466,6 +466,7 @@ async function renderSaved() {
   const gone = ids.length - events.length - places.length;
   events.sort((a, b) => a.start_date.localeCompare(b.start_date));
   view.innerHTML = `<section class="sec"><div class="result-head"><h2>저장한 목록</h2><span>${events.length + places.length}건</span></div>
+    <button class="share-all" data-share-all>${I('share')}저장한 ${events.length + places.length}곳 한 번에 공유하기</button>
     <div class="list">${events.map(rowHtml).join('')}${places.map(placeRow).join('')}</div>
     ${gone > 0 ? `<p class="foot-note">종료되었거나 사라진 행사 ${gone}건은 숨겼어요.</p>` : ''}</section>`;
 }
@@ -607,6 +608,22 @@ function toggleSave(id) {
   store.set('saved', [...S.saved]);
   toast(S.saved.has(id) ? '저장했어요' : '저장을 뺐어요');
 }
+// 저장한 행사·장소를 글 하나로 묶어 카카오톡 등으로 보낸다(앞에서 10개까지, 링크는 항목마다)
+async function shareAll() {
+  const items = [...S.saved].map(id => S.cache.get(id)).filter(Boolean);
+  if (!items.length) return toast('공유할 저장 목록이 없어요');
+  const root = `${location.origin}${location.pathname}`;
+  const lines = items.sort((a, b) => (a.start_date ?? '9').localeCompare(b.start_date ?? '9')).slice(0, 10).map((x, i) => {
+    const isPlace = x.name != null;
+    const url = isPlace ? (x.url || `${root}?p=${encodeURIComponent(x.id)}`) : `${root}?d=${encodeURIComponent(x.id)}&g=${encodeURIComponent(x.gu)}`;
+    return `${i + 1}. ${isPlace ? x.name : x.title}\n   ${isPlace ? `${x.region} ${x.gu}` : `${rangeLabel(x.start_date, x.end_date)} · ${where(x)}`}\n   ${url}`;
+  });
+  const text = `[아빠 오늘 어디가] 같이 가요! 저장한 ${items.length}곳${items.length > 10 ? ' 중 10곳' : ''}\n\n${lines.join('\n')}`;
+  try {
+    if (navigator.share) await navigator.share({ title: '아빠 오늘 어디가', text });
+    else { await navigator.clipboard.writeText(text); toast('목록을 복사했어요'); }
+  } catch { /* 공유 취소 */ }
+}
 async function share(id) {
   const e = S.cache.get(id); if (!e) return;
   const text = `${e.title}\n${rangeLabel(e.start_date, e.end_date)} · ${where(e)}`;
@@ -674,6 +691,7 @@ document.addEventListener('click', e => {
   if (heart) { toggleSave(heart.dataset.heart); heart.classList.toggle('on', S.saved.has(heart.dataset.heart)); if (S.tab === 'saved') render(); return; }
   const dh = t.closest('[data-dheart]');
   if (dh) { toggleSave(dh.dataset.dheart); refreshDetailHeart(dh.dataset.dheart); return; }
+  if (t.closest('[data-share-all]')) return shareAll();
   const sh = t.closest('[data-share]'); if (sh) return share(sh.dataset.share);
   const shp = t.closest('[data-share-place]'); if (shp) return sharePlace(shp.dataset.sharePlace);
   if (t.closest('[data-close]')) return closeScreen();

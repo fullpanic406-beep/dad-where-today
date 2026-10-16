@@ -339,3 +339,8 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 
 /* 탭 전환 시 떠나는 화면 */
 .view-ghost { position: absolute; overflow: hidden; background: var(--bg); pointer-events: none; z-index: 2; }
+
+/* 저장 횟수·한 번에 공유 */
+.share-all { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 44px; margin: 4px 0 12px; border-radius: 12px; background: var(--brand); color: #fff; font-size: 14.5px; font-weight: 800; }
+.share-all svg.i { width: 18px; height: 18px; }
+.share-all:active { filter: brightness(.94); }
