@@ -84,7 +84,7 @@ const S = {
   from: TODAY, to: TODAY, anchor: TODAY, weekOnly: false,
   family: false, free: false, cat: '',
   searchAll: false,
-  placeKind: '', placeRegion: '', near: null, // near: 가까운 순 기준점(내 위치를 쓰면 { lat, lng, label })
+  placeKind: '', placeRegion: '', placeSort: 'area', near: null, // near: 가까운 순 기준점(내 위치를 쓰면 { lat, lng, label })
   saved: new Set(store.get('saved', [])),
   cache: new Map(), meta: null, mapData: null, weather: null,
 };
@@ -231,6 +231,31 @@ function placeCard(p) {
     <div class="m">${esc(p.gu)}${p.dist != null ? ' · ' + distText(p) : ''}</div>
   </button>`;
 }
+// ---- 구·동 단위로 묶어 보여 주기 ----
+const koSort = (a, b) => a.localeCompare(b, 'ko');
+const groupBy = (list, keyFn) => { const m = new Map(); for (const x of list) { const k = keyFn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); } return m; };
+const groupBox = (title, count, rows) => `<div class="gbox"><div class="grp"><b>${title}</b><span>${count}</span></div><div class="list">${rows}</div></div>`;
+// 선택한 구의 행사를 동별로. 한 묶음 안에서는 이 기간에 시작하는 행사를 날짜순으로, 이미 진행 중이던 장기 행사는 뒤에 둔다
+function groupedEvents(events) {
+  const ongoing = e => e.start_date < S.from;
+  const scan = [...events].sort((a, b) => ongoing(a) - ongoing(b)
+    || (ongoing(a) ? a.end_date.localeCompare(b.end_date) : a.start_date.localeCompare(b.start_date)) || koSort(a.title, b.title));
+  const g = groupBy(scan, e => e.dong || '');
+  const keys = [...g.keys()].sort((a, b) => (a === '') - (b === '') || koSort(a, b)); // '그 밖의 지역'은 맨 뒤
+  return keys.map(k => groupBox(esc(k || '그 밖의 지역'), `${g.get(k).length}건`, g.get(k).map(rowHtml).join(''))).join('');
+}
+// 가볼 곳: 서울 → 경기, 내 구가 맨 위, 구(시) › 동 순. '가까운 순'이면 묶지 않고 거리순
+function groupedPlaces(list) {
+  if (S.placeSort === 'near') return `<div class="list">${list.map(placeRow).join('')}</div>`;
+  const RG = { 서울: 0, 경기: 1 };
+  const g = groupBy(list, p => `${p.region}|${p.gu}|${p.dong || ''}`);
+  const mine = k => (k.startsWith('서울|') && k.split('|')[1] === S.gu ? 0 : 1);
+  const keys = [...g.keys()].sort((a, b) => {
+    const [ra, ga, da] = a.split('|'), [rb, gb, db] = b.split('|');
+    return mine(a) - mine(b) || (RG[ra] ?? 9) - (RG[rb] ?? 9) || koSort(ga, gb) || (da === '') - (db === '') || koSort(da, db);
+  });
+  return keys.map(k => { const [r, gu, d] = k.split('|'); return groupBox(`${r === '서울' ? '' : '경기 '}${esc(gu)} › ${esc(d || '그 밖의 지역')}`, `${g.get(k).length}곳`, g.get(k).map(placeRow).join('')); }).join('');
+}
 const emptyHtml = (title, msg) => `<div class="empty"><img src="img/empty.jpg" alt=""><b>${title}</b>${msg}</div>`;
 
 /* ---------- 홈 ---------- */
@@ -359,7 +384,7 @@ async function renderCal() {
         ${[['', '전체'], ...Object.entries(CAT)].map(([k, v]) => `<button class="chip ${S.cat === k ? 'on' : ''}" data-cat="${k}">${v}</button>`).join('')}
       </div>
       <div class="result-head" style="margin-top:18px"><h2>${head}</h2><span>${esc(S.gu)} · ${list.total}건</span></div>
-      ${list.events.length ? `<div class="list">${list.events.map(rowHtml).join('')}</div>`
+      ${list.events.length ? groupedEvents(list.events)
         : emptyHtml('이 날은 행사가 없어요', `다른 날짜나 지역을 골라 보세요.${S.family || S.free || S.cat ? '<br>필터를 풀면 더 나올 수 있어요.' : ''}`)}
       ${list.total > list.events.length ? `<p class="foot-note" style="padding-bottom:0">상위 ${list.events.length}건만 보여요. 필터로 좁혀 보세요.</p>` : ''}
     </section>`;
@@ -398,12 +423,13 @@ async function renderPlaces() {
   const regions = [...new Set(all.places.map(p => p.region))];
   view.innerHTML = `
     <section class="sec">
-      <div class="sec-head"><div><h2>가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 순 · 문 여는 시간과 휴관일을 확인하세요</p></div>
+      <div class="sec-head"><div><h2>가볼 만한 곳</h2><p class="sec-sub">${S.placeSort === 'near' ? `${esc(near?.label ?? '')}에서 가까운 순` : `${esc(S.gu)}를 맨 위에, 구·동별로 모았어요`} · 문 여는 시간과 휴관일을 확인하세요</p></div>
         <button class="geo ${S.near ? 'on' : ''}" data-geo>${I('pin')}${S.near ? '내 위치' : '내 위치로'}</button></div>
       ${regions.length > 1 ? `<div class="chips" style="margin-bottom:8px"><button class="chip ${!S.placeRegion ? 'on' : ''}" data-pregion="">전체 지역</button>${regions.map(r => `<button class="chip ${S.placeRegion === r ? 'on' : ''}" data-pregion="${esc(r)}">${esc(r)}</button>`).join('')}</div>` : ''}
       <div class="chips"><button class="chip ${!S.placeKind ? 'on' : ''}" data-pkind="">전체</button>${kinds.map(k => `<button class="chip ${S.placeKind === k ? 'on' : ''}" data-pkind="${k}">${KIND[k]}</button>`).join('')}</div>
-      <div class="result-head" style="margin-top:18px"><h2>${S.placeKind ? KIND[S.placeKind] : '전체'}</h2><span>${list.total}곳</span></div>
-      ${list.places.length ? `<div class="list">${list.places.map(placeRow).join('')}</div>` : emptyHtml('아직 등록된 곳이 없어요', '다른 분류를 골라 보세요.')}
+      <div class="seg"><button class="${S.placeSort === 'area' ? 'on' : ''}" data-psort="area">지역별</button><button class="${S.placeSort === 'near' ? 'on' : ''}" data-psort="near">가까운 순</button></div>
+      <div class="result-head" style="margin-top:14px"><h2>${S.placeKind ? KIND[S.placeKind] : '전체'}</h2><span>${list.total}곳</span></div>
+      ${list.places.length ? groupedPlaces(list.places) : emptyHtml('아직 등록된 곳이 없어요', '다른 분류를 골라 보세요.')}
       <p class="foot-note" style="padding-bottom:0">출처: 서울시 문화공간 정보, 한국관광공사(TourAPI) · 사진 일부는 공공누리 1·3유형 · 운영 시간과 요금은 바뀔 수 있어요</p>
     </section>`;
 }
@@ -621,6 +647,7 @@ document.addEventListener('click', e => {
   if (dot) { carHold?.(); const tr = $('#carTrack'); tr.scrollTo({ left: Number(dot.dataset.slide) * tr.clientWidth, behavior: 'smooth' }); return; }
   const pl = t.closest('[data-place]'); if (pl) return openPlace(pl.dataset.place);
   const tg = t.closest('[data-tab-go]'); if (tg) return setTab(tg.dataset.tabGo);
+  const ps = t.closest('[data-psort]'); if (ps) { S.placeSort = ps.dataset.psort; return render(); }
   const pk = t.closest('[data-pkind]'); if (pk) { S.placeKind = pk.dataset.pkind; return render(); }
   const pr = t.closest('[data-pregion]'); if (pr) { S.placeRegion = pr.dataset.pregion; return render(); }
   if (t.closest('[data-geo]')) return useMyLocation();

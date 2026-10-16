@@ -16,6 +16,7 @@ import { GU, CATS } from './gu.js';
 import * as seoulEvents from './sources/seoul-events.js';
 import * as yeyak from './sources/yeyak.js';
 import * as yeogijeogi from './sources/yeogijeogi.js';
+import { dongOf, dongFromText } from './dong.js';
 import * as manual from './sources/manual.js';
 import * as cultureFestival from './sources/culture-festival.js';
 import * as tourFestival from './sources/tourapi-festival.js';
@@ -92,6 +93,17 @@ async function main() {
     }
   }
 
+  // 행사마다 '동'을 붙인다: ① 직접 적은 값 ② 좌표로 찾은 동(같은 구일 때만) ③ 장소·제목 글에 그 구의 동 이름이 있으면 그 동
+  let dongHit = 0;
+  for (const e of events) {
+    if (!e.dong) {
+      const hit = dongOf(e.lat, e.lng);
+      e.dong = (hit && hit.city === e.gu ? hit.dong : '') || dongFromText(`${e.place} ${e.title}`, e.gu) || '';
+    }
+    if (e.dong) dongHit++;
+  }
+  console.log(`[ingest] 동 정보: 행사 ${events.length}건 중 ${dongHit}건(${Math.round(dongHit / events.length * 100)}%)`);
+
   // 구별로 나눠 저장
   rmSync(path.join(OUT, 'gu'), { recursive: true, force: true });
   rmSync(path.join(OUT, 'desc'), { recursive: true, force: true });
@@ -142,7 +154,18 @@ async function main() {
       placeCounts[src.name] = keep.length;
     }
   }
-  places.sort((a, b) => a.region.localeCompare(b.region, 'ko') || a.gu.localeCompare(b.gu, 'ko') || a.name.localeCompare(b.name, 'ko'));
+  // 장소마다 '동'을 붙인다: 도로명주소 끝의 "(신정동)" → 좌표로 찾은 동 → 주소 글에 있는 동 이름
+  let placeDong = 0;
+  for (const p of places) {
+    if (!p.dong) {
+      const paren = (p.addr.match(/\(([가-힣0-9]+[동읍면가])[,)]/) ?? [])[1];
+      const hit = dongOf(p.lat, p.lng);
+      p.dong = (paren ? paren.replace(/\d+동$/, '동') : '') || (hit && hit.city === p.gu ? hit.dong : '') || dongFromText(p.addr, p.gu, p.region) || '';
+    }
+    if (p.dong) placeDong++;
+  }
+  console.log(`[ingest] 동 정보: 장소 ${places.length}곳 중 ${placeDong}곳`);
+  places.sort((a, b) => a.region.localeCompare(b.region, 'ko') || a.gu.localeCompare(b.gu, 'ko') || a.dong.localeCompare(b.dong, 'ko') || a.name.localeCompare(b.name, 'ko'));
   write(path.join(OUT, 'places.json'), { meta: { generatedAt: new Date().toISOString(), total: places.length, counts: placeCounts }, places });
 
   // 지도·건수용 요약: [구 번호, 시작, 종료, 아이와, 무료, 카테고리 번호, 접수중 여부, 운영 요일 비트마스크(127=매일)]

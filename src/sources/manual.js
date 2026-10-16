@@ -3,7 +3,7 @@
 // 다른 소스와 겹치면(같은 구·겹치는 기간·비슷한 제목) 이쪽 값을 우선하고 빈 항목만 다른 소스가 채운다.
 //
 // 항목: title(필수), gu(필수, 25개 구 중 하나), start_date(필수, YYYY-MM-DD), end_date, category(festival|show|exhibit|edu|etc),
-//       place, time, free(true/false), fee, target, family(true/false), link, image, desc, source_note(출처·확인 사항)
+//       place, dong(예: 목동), time, free(true/false), fee, target, family(true/false), link, image, desc, source_note(출처·확인 사항)
 // 끝난 행사는 자동으로 빠진다. 값을 추측해서 넣지 말고, 확인한 내용만 적는다(모르는 항목은 비워 둔다).
 import { createHash } from 'node:crypto';
 import { readFileSync, existsSync } from 'node:fs';
@@ -37,7 +37,7 @@ export async function fetchEvents(_key, today) {
         gu: x.gu, place: (x.place ?? '').trim(), start_date: x.start_date, end_date: end < x.start_date ? x.start_date : end,
         time: (x.time ?? '').trim(), is_free: x.free === true ? 1 : x.free === false ? 0 : null, fee: (x.fee ?? '').trim(),
         target: (x.target ?? '').trim(), family: x.family ? 1 : 0, link: (x.link ?? '').trim(), image: (x.image ?? '').trim(),
-        source_note: (x.source_note ?? '').trim(), lat: null, lng: null,
+        source_note: (x.source_note ?? '').trim(), dong: (x.dong ?? '').trim(), lat: null, lng: null,
       },
       desc: (x.desc ?? '').trim().slice(0, 600),
     });

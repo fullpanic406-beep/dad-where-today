@@ -302,3 +302,12 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .geo svg.i { width: 16px; height: 16px; }
 .geo.on { background: var(--brand-soft); color: var(--brand-dark); }
 .tabs button span { white-space: nowrap; }
+
+/* ---- 구·동 단위 묶음 ---- */
+.gbox { margin-bottom: 4px; }
+.grp { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; margin: 0 -16px; padding: 9px 16px; background: #F4F5F7; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.grp b { font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+.grp span { color: var(--mute); font-weight: 600; font-size: 12.5px; }
+.seg { display: inline-flex; margin-top: 12px; padding: 3px; border-radius: 12px; background: #F2F4F6; }
+.seg button { height: 30px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--sub); }
+.seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
