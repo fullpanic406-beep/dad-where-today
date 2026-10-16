@@ -406,7 +406,7 @@ async function renderMap() {
     <div class="map-card">
       <svg viewBox="${viewBox}" role="img" aria-label="서울 구 지도">
         ${districts.map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" class="${d.name === S.gu ? 'sel' : ''}"/>`).join('')}
-        ${districts.map(d => `<text x="${d.cx}" y="${d.cy + 5}">${d.name.replace('구', '')}</text>`).join('')}
+        ${districts.map(d => `<text x="${d.cx}" y="${d.cy + 5}">${d.name.replace(/구$/, '')}</text>`).join('')}
       </svg>
       <div class="legend">적음 ${SCALE.map(c => `<i style="background:${c}"></i>`).join('')} 많음 <span style="margin-left:auto">회색 = 없음</span></div>
     </div>
