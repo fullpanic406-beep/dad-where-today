@@ -47,7 +47,7 @@ const rangeLabel = (a, b) => (a === b ? md(a) : `${md(a)} ~ ${md(b)}`);
 const whenText = e => `${rangeLabel(e.start_date, e.end_date)}${e.dow_label ? (e.dow_label === '주말' ? ' · 주말마다' : ` · 매주 ${e.dow_label}`) : ''}`;
 const where = e => (e.place && !e.place.includes(e.gu) ? `${e.gu} · ${e.place}` : e.place || e.gu);
 const catKey = e => (CAT[e.category] ? e.category : 'etc');
-const catImg = e => (e.category === 'kidscafe' ? 'edu' : catKey(e)); // 대체 일러스트(사진이 없을 때)
+const catImg = e => (!CAT[e.category] || e.category === 'etc' ? 'weekend' : e.category); // 사진이 없을 때 쓰는 3D 아이콘
 const store = {
   get(k, def) { try { return JSON.parse(localStorage.getItem('ado.' + k)) ?? def; } catch { return def; } },
   set(k, v) { try { localStorage.setItem('ado.' + k, JSON.stringify(v)); } catch { /* 저장 불가 환경 */ } },
@@ -112,22 +112,38 @@ function wxPill(day) {
 }
 
 /* ---------- 공통 조각 ---------- */
-const thumb = e => `<img src="img/cat-${catImg(e)}.jpg" alt="">${e.image ? `<img class="ev" src="${esc(e.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}`;
+const thumb = e => `<img src="img/i-${catImg(e)}.jpg" alt="">${e.image ? `<img class="ev" src="${esc(e.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}`;
 const heartBtn = e => `<button class="heart ${S.saved.has(e.id) ? 'on' : ''}" data-heart="${esc(e.id)}" aria-label="저장">${I('heart')}</button>`;
 const statusBadge = e => !e.status ? '' : e.status === '접수중' ? '<span class="badge open">접수중</span>'
   : e.status === '안내중' ? '<span class="badge soon">접수 예정</span>' : '<span class="badge">마감</span>';
 const badgesHtml = e => `${e.dow_label ? `<span class="badge wk">${e.dow_label} 한정</span>` : ''}${statusBadge(e)}<span class="badge">${CAT[e.category] ?? '기타'}</span>${e.is_free === 1 ? '<span class="badge free">무료</span>' : ''}${e.family ? '<span class="badge kid">아이와</span>' : ''}`;
+
+// 목록용 배지: 한정·접수 상태 / 무료 / 아이와 (분류는 아래 줄 글자로 옮겨 덜 복잡하게)
+const rowBadges = e => `${e.dow_label ? `<span class="badge wk">${e.dow_label} 한정</span>` : statusBadge(e)}${e.is_free === 1 ? '<span class="badge free">무료</span>' : ''}${e.family ? '<span class="badge kid">아이와</span>' : ''}`;
 
 function rowHtml(e) {
   S.cache.set(e.id, e);
   return `<div class="row" data-id="${esc(e.id)}" role="button" tabindex="0">
     <div class="ph">${thumb(e)}</div>
     <div class="body">
-      <div class="badges">${badgesHtml(e)}</div>
+      <div class="badges">${rowBadges(e)}</div>
       <h3>${esc(e.title)}</h3>
       <div class="meta">${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</div>
-      <div class="meta dim">${esc(where(e))}</div>
+      <div class="meta dim">${CAT[e.category] ?? '기타'} · ${esc(where(e))}</div>
     </div>${heartBtn(e)}</div>`;
+}
+function featHtml(e) {
+  S.cache.set(e.id, e);
+  return `<button class="feat" data-id="${esc(e.id)}">
+    <div class="feat-img"><img src="img/i-${catImg(e)}.jpg" alt=""><img class="ev" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div>
+    <div class="feat-body">
+      <span class="eyebrow">이번 주말 PICK</span>
+      <h3>${esc(e.title)}</h3>
+      <p>${whenText(e)}</p>
+      <p class="dim">${esc(where(e))}</p>
+      <div class="badges">${rowBadges(e)}</div>
+    </div>
+  </button>`;
 }
 function pcardHtml(e) {
   S.cache.set(e.id, e);
@@ -155,11 +171,14 @@ async function renderHome() {
   ]);
   const sc = [['today', 'sun', '오늘'], ['weekend', 'sparkle', '이번 주말'], ['free', 'gift', '무료'], ['kids', 'smile', '아이와'], ['festival', 'flag', '축제']];
 
-  const section = (title, list, more) => list.events.length ? `
+  const section = (title, list, more, sub = '', skip = null) => list.events.some(e => e !== skip) ? `
     <section class="sec">
-      <div class="sec-head"><h2>${title}</h2><button class="more" data-go="${more}">더보기${I('chevR')}</button></div>
-      <div class="rail">${list.events.slice(0, 10).map(pcardHtml).join('')}</div>
+      <div class="sec-head"><div><h2>${title}</h2>${sub ? `<p class="sec-sub">${sub}</p>` : ''}</div><button class="more" data-go="${more}">더보기${I('chevR')}</button></div>
+      ${skip ? featHtml(skip) : ''}
+      <div class="rail">${list.events.filter(e => e !== skip).slice(0, 10).map(pcardHtml).join('')}</div>
     </section>` : '';
+  // 이번 주말 PICK: 사진이 있는 첫 행사를 크게
+  const feat = wk.events.find(e => e.image);
 
   view.innerHTML = `
     <section class="hero">
@@ -171,13 +190,13 @@ async function renderHome() {
         <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>
       </div>
     </section>
-    <section class="sec"><div class="shortcuts">${sc.map(([k, ic, t]) => `<button data-go="${k}"><span class="tile">${I(ic)}</span>${t}</button>`).join('')}</div></section>
-    ${section('이번 주말 가볼 만한 곳', wk, 'weekend')}
+    <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
+    ${section('이번 주말 가볼 만한 곳', wk, 'weekend', '아이와 가기 좋은 순서로 골랐어요', feat)}
     ${td.events.length ? `<section class="sec">
-      <div class="sec-head"><h2>오늘 열리는 행사</h2><button class="more" data-go="today">더보기${I('chevR')}</button></div>
+      <div class="sec-head"><div><h2>오늘 열리는 행사</h2><p class="sec-sub">오늘 갈 수 있는 곳이에요</p></div><button class="more" data-go="today">더보기${I('chevR')}</button></div>
       <div class="list">${td.events.slice(0, 4).map(rowHtml).join('')}</div></section>` : ''}
-    ${section('무료로 즐기는 행사', fr, 'free')}
-    ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe')}
+    ${section('무료로 즐기는 행사', fr, 'free', '2주 안에 열리는 무료 행사')}
+    ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', '비 오는 날에도 좋아요')}
     ${!wk.events.length && !td.events.length && !fr.events.length && !kc.events.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
     <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
 }
@@ -281,8 +300,8 @@ const detail = $('#detail'), searchEl = $('#search');
 function openDetail(id, push = true) {
   const e = S.cache.get(id); if (!e) return;
   const media = e.image
-    ? `<div class="bg" style="background-image:url('${esc(e.image)}')"></div><img class="main" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`
-    : `<img class="cover" src="img/cat-${catImg(e)}.jpg" alt="">`;
+    ? `<div class="bg" style="background-image:url('${esc(e.image)}')"></div><img class="main" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">`
+    : `<img class="cover" src="img/i-${catImg(e)}.jpg" alt="">`;
   const map = e.place ? `https://map.naver.com/p/search/${encodeURIComponent((e.place.includes(e.gu) ? '' : e.gu + ' ') + e.place)}` : '';
   detail.innerHTML = `<div class="screen">
     <div class="d-scroll">
@@ -292,12 +311,17 @@ function openDetail(id, push = true) {
       <div class="d-body">
         <div class="badges">${badgesHtml(e)}</div>
         <h2>${esc(e.title)}</h2>
+        <div class="facts">
+          <div><b>요금</b><span>${e.is_free === 1 ? '무료' : e.is_free === 0 ? '유료' : '정보 없음'}</span></div>
+          <div><b>대상</b><span>${esc((e.target || '제한 없음').replace(/\s*\(.*?\)/g, '').slice(0, 9))}</span></div>
+          <div><b>상태</b><span>${e.dow_label ? esc(e.dow_label) + ' 한정' : e.status ? esc(e.status) : e.start_date > TODAY ? '예정' : '진행 중'}</span></div>
+        </div>
         <div class="info">
           <div>${I('calendar')}<p><b>일정</b><span>${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</span></p></div>
           <div>${I('pin')}<p><b>장소</b><span>${esc(where(e))}</span>${map ? `<a class="mini" target="_blank" rel="noopener" href="${map}">지도 보기</a>` : ''}</p></div>
           ${e.rcpt_start ? `<div>${I('clock')}<p><b>예약 접수</b><span>${md(e.rcpt_start)} ~ ${md(e.rcpt_end)}${e.status ? ' · ' + esc(e.status) : ''}</span></p></div>` : ''}
-          <div>${I('ticket')}<p><b>요금</b><span>${esc(e.fee) || (e.is_free === 1 ? '무료' : '정보 없음')}</span></p></div>
-          ${e.target ? `<div>${I('users')}<p><b>대상</b><span>${esc(e.target)}</span></p></div>` : ''}
+          ${e.fee && !/^(무료|유료)$/.test(e.fee.trim()) ? `<div>${I('ticket')}<p><b>요금 안내</b><span>${esc(e.fee)}</span></p></div>` : ''}
+          ${e.target && (e.target.length > 9 || /\(/.test(e.target)) ? `<div>${I('users')}<p><b>대상 안내</b><span>${esc(e.target)}</span></p></div>` : ''}
         </div>
         <p class="d-desc" id="dDesc" hidden></p>
         <p class="d-note">${e.source === 'yeyak' ? '서울시 공공서비스예약 정보(공공누리 1유형) 기준이에요.' : e.source === 'yeogijeogi' ? '서울시 우리동네 키움포털 정보 기준이에요.' : '서울 열린데이터광장(서울시 문화행사 정보) 기준이에요.'} 일정·요금·접수 상태는 바뀔 수 있으니 방문 전에 상세 페이지에서 확인해 주세요.</p>
@@ -369,9 +393,15 @@ function renderChrome() {
   $('#searchBtn').innerHTML = I('search');
   $('#tabs').innerHTML = TABS.map(([k, ic, t]) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${I(ic)}<span>${t}</span></button>`).join('');
 }
+const SK_ROW = '<div class="sk-item"><i class="sk sk-img"></i><div><b class="sk sk-line w80"></b><b class="sk sk-line w50"></b><b class="sk sk-line w65"></b></div></div>';
+const skeleton = tab => tab === 'home'
+  ? `<div class="sk sk-hero"></div><div class="sec"><div class="sk-tiles">${'<i class="sk sk-tile"></i>'.repeat(5)}</div></div><div class="sec"><b class="sk sk-line w40"></b><div class="rail">${'<div class="sk sk-card"></div>'.repeat(3)}</div></div>`
+  : `<div class="sec">${SK_ROW.repeat(5)}</div>`;
+
 async function render(keepScroll = true) {
   const y = keepScroll ? view.scrollTop : 0;
   renderChrome();
+  if (!keepScroll && S.tab !== 'saved') view.innerHTML = skeleton(S.tab); // 탭·지역을 바꿀 때 빈 화면 대신 뼈대
   try {
     await ({ home: renderHome, cal: renderCal, map: renderMap, saved: renderSaved }[S.tab])();
   } catch (err) {
@@ -482,6 +512,7 @@ function startSplash() {
 }
 
 (async function init() {
+  view.addEventListener('scroll', () => $('.top').classList.toggle('scrolled', view.scrollTop > 4), { passive: true });
   const splash = startSplash();
   renderChrome();
   view.innerHTML = `<div class="loading"><img src="img/logo.png" alt="">갈 곳을 찾는 중…</div>`;
