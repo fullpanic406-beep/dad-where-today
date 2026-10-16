@@ -3,6 +3,7 @@
 // 서울시 문화행사 API 에는 일정하게 올라오지 않아서 보완한다. 갱신은 분기·매월 초 병합이라 최신성은 떨어질 수 있다.
 // 공공데이터포털 인증키(TourAPI 와 같은 키)가 이 API 의 '활용신청'을 마친 계정이어야 한다.
 import { createHash } from 'node:crypto';
+import https from 'node:https';
 import { clean, htmlToText } from '../seoul-api.js';
 import { isFamily } from '../classify.js';
 
@@ -11,6 +12,16 @@ export const label = '전국문화축제표준데이터(서울)';
 export const optional = true;
 
 const BASE = 'https://api.data.go.kr/openapi/tn_pubr_public_cltur_fstvl_api';
+// fetch 는 연결 대기가 약 10초로 짧아 해외 서버에서 시간 초과(UND_ERR_CONNECT_TIMEOUT)가 났다 → https 모듈로 40초까지 기다린다
+const getText = (url, ms = 40000) => new Promise((resolve, reject) => {
+  const req = https.get(url, { timeout: ms }, res => {
+    const chunks = [];
+    res.on('data', c => chunks.push(c));
+    res.on('end', () => resolve({ status: res.statusCode, text: Buffer.concat(chunks).toString('utf8') }));
+  });
+  req.on('timeout', () => req.destroy(Object.assign(new Error('응답 시간 초과'), { code: 'ETIMEDOUT' })));
+  req.on('error', reject);
+});
 const keyOf = () => (process.env.DATA_GO_KR_KEY || process.env.TOURAPI_KEY || '').trim();
 const pick = v => clean(htmlToText(v ?? ''));
 
@@ -51,9 +62,8 @@ export async function fetchEvents(_seoulKey, today, log) {
     let body;
     for (let i = 1; i <= 4; i++) {
       try {
-        const res = await fetch(`${BASE}?serviceKey=${key}&pageNo=${page}&numOfRows=1000&type=json`, { signal: AbortSignal.timeout(40000) });
-        const text = await res.text();
-        if (res.status === 403 || text.includes('SERVICE_KEY_IS_NOT_REGISTERED')) throw new Error('이 API 의 활용신청이 안 된 인증키입니다(등록되지 않은 서비스키)');
+        const { status, text } = await getText(`${BASE}?serviceKey=${key}&pageNo=${page}&numOfRows=1000&type=json`);
+        if (status === 403 || text.includes('SERVICE_KEY_IS_NOT_REGISTERED')) throw new Error('이 API 의 활용신청이 안 된 인증키입니다(등록되지 않은 서비스키)');
         const j = JSON.parse(text);
         if (j.header?.resultCode && j.header.resultCode !== '00') throw new Error(`${j.header.resultCode} ${j.header.resultMsg}`);
         body = j.body; break;

@@ -177,6 +177,23 @@ function pickSlide(e) {
   </button>`;
 }
 
+// 아빠 PICK 에 늘 넣는 장소(이름이 정확히 같은 장소). 행사 추천과 상관없이 항상 첫 추천으로 나온다.
+const PINNED_PLACES = ['고양어린이박물관'];
+function pickPlaceSlide(p) {
+  S.cache.set(p.id, p);
+  return `<button class="car-slide pick" data-place="${esc(p.id)}">
+    <div class="pick-bg ${p.image ? '' : 'none'}"${p.image ? ` style="background-image:url('${esc(p.image)}')"` : ''}></div>
+    <div class="pick-text">
+      <span class="eyebrow">아빠 PICK</span><span class="locchip">${p.region === '서울' ? '' : '경기 '}${esc(p.gu)}${p.dong ? ' ' + esc(p.dong) : ''}</span>
+      <h2>${esc(p.name)}</h2>
+      <p>${esc(p.hours || p.fee || KIND[p.kind] || '')}</p>
+      <p>${esc(p.addr)}</p>
+      <div class="badges">${placeBadges(p)}</div>
+    </div>
+    <div class="pick-img"><img src="${placeImg(p)}" alt="">${p.image ? `<img class="ev" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.classList.toggle('fit', this.naturalWidth / this.naturalHeight > 1.2)" onerror="this.remove()">` : ''}</div>
+  </button>`;
+}
+
 // 상단 배너: 첫 슬라이드는 브랜드 히어로, 이어서 '아빠 PICK' 추천 행사가 자동으로 넘어간다
 let carTimer = null, carHold = null;
 function setupCarousel() {
@@ -272,14 +289,16 @@ function updatedLabel() {
 async function renderHome() {
   const [w0, w1] = weekendOf(TODAY);
   const near = nearPoint();
-  const [wk, td, kc, fest, soon, pl] = await Promise.all([
+  const [wk, td, kc, fest, soon, pl, pinnedRes] = await Promise.all([
     api('/api/events', { gu: S.gu, from: w0, to: w1 }),
     api('/api/events', { gu: S.gu, from: TODAY, to: TODAY }),
     api('/api/events', { gu: S.gu, from: TODAY, to: w1, cat: 'kidscafe' }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), cat: 'festival' }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13) }),
     api('/api/places', { near, limit: 12 }).catch(() => ({ places: [], total: 0 })),
+    Promise.all(PINNED_PLACES.map(n => api('/api/places', { q: n, limit: 10 }).then(r => r.places.find(p => p.name === n)).catch(() => null))),
   ]);
+  const pinned = pinnedRes.filter(Boolean); // 데이터에 없으면 건너뛴다
   pl.places.sort((a, b) => byArea(a, b) || (a.dist ?? 1e9) - (b.dist ?? 1e9));
   const sc = [['today', 'sun', '오늘'], ['weekend', 'sparkle', '이번 주말'], ['free', 'gift', '무료'], ['kids', 'smile', '아이와'], ['festival', 'flag', '축제']];
 
@@ -317,9 +336,9 @@ async function renderHome() {
             <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>
           </div>
         </div>
-        ${picks.map(pickSlide).join('')}
+        ${pinned.map(pickPlaceSlide).join('')}${picks.map(pickSlide).join('')}
       </div>
-      ${picks.length ? `<div class="car-dots" id="carDots">${['', ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>` : ''}
+      ${picks.length + pinned.length ? `<div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>` : ''}
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${section('이번 주말 가볼 만한 곳', { events: [...wk.events].sort((a, b) => byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}구·동 순서로 모았어요`, 20)}
