@@ -1,11 +1,11 @@
 # 아빠 오늘 어디가
 
 서울 25개 구의 가족 나들이·행사를 캘린더로 보여 주는 모바일 웹앱. 기본 지역은 양천구이고 구 지도에서 바꾼다.
-서버 없이 동작한다: **GitHub Actions 가 매일 수집(서울 25개 구 전체) → 구별 JSON 생성 → GitHub Pages 로 배포**, 앱은 JSON 을 읽어 브라우저에서 필터링한다.
+서버 없이 동작한다: **GitHub Actions 가 매주 월·화 수집(서울 25개 구 전체) → 구별 JSON 생성 → GitHub Pages 로 배포**, 앱은 JSON 을 읽어 브라우저에서 필터링한다.
 
 ## 구조
 ```
-GitHub Actions (매일 04:00 KST)
+GitHub Actions (매주 월·화 04:00 KST)
   └ node src/ingest.js ── 서울시 문화행사 + 서울시 공공서비스예약(문화체험·교육) + 여기저기 서울형 키즈카페
         └ public/data/  meta.json · index.json(지도용 요약) · gu/<구>.json · desc/<구>.json
   └ public/ 을 GitHub Pages 로 배포
@@ -29,7 +29,7 @@ GitHub Actions (매일 04:00 KST)
 | `scripts/set-data-base.js` | 앱 빌드용: 앱이 읽을 데이터 주소를 `public/config.js` 에 기록 |
 | `capacitor.config.json`, `android/` | 안드로이드 앱 프로젝트(Capacitor) |
 | `.github/workflows/build-android.yml` | 클라우드에서 테스트용 APK 빌드 |
-| `.github/workflows/update-and-deploy.yml` | 매일 수집 + 배포 |
+| `.github/workflows/update-and-deploy.yml` | 매주 월·화 수집 + 배포 |
 
 ## 로컬에서 실행
 ```
@@ -43,7 +43,7 @@ Node 20 이상. 외부 패키지 없음. 인증키: data.seoul.go.kr 회원가�
 1. 저장소를 만든다. **무료 GitHub Pages 는 공개(public) 저장소에서만** 된다. (비공개로 하려면 유료 플랜이나 Cloudflare Pages 등 다른 호스팅)
 2. Settings → Secrets and variables → Actions → `SEOUL_API_KEY` 등록. 이후 로컬의 `api.txt`는 지워도 된다(`.env`·`api.txt`는 `.gitignore`).
 3. Settings → Pages → Source 를 **GitHub Actions** 로 설정.
-4. Actions 탭 → 「행사 업데이트 및 배포」 → Run workflow 로 첫 배포. 이후 매일 자동.
+4. Actions 탭 → 「행사 업데이트 및 배포」 → Run workflow 로 첫 배포. 이후 매주 월·화 새벽에 자동(그 사이에는 Run workflow 로 수동 갱신).
 
 ### 알아둘 점
 - **해외 IP 접근**: Actions 서버는 해외에 있다. 서울시 API 가 해외 IP 를 막는지는 확인되지 않았다. 첫 실행에서 실패하면 로그에 오류가 남고 배포는 건너뛴다(기존 사이트 유지). 막히는 경우 한국 리전 서버로 옮긴다(`npm run ingest` 를 서버 cron 으로).
