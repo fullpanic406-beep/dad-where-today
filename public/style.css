@@ -329,7 +329,7 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .hero-text .eyebrow { margin-bottom: 6px; }
 .hero-text h2 { font-size: 21px; }
 .hero-text p { margin-top: 2px; font-size: 13px; }
-.wx { top: 10px; right: 10px; }
+.wx { top: 10px; left: 12px; right: auto; }
 .pick { gap: 12px; padding: 14px 14px 44px 18px; }
 .pick-text .eyebrow { height: 22px; margin-bottom: 6px; }
 .pick-text h2 { font-size: 18px; -webkit-line-clamp: 2; }
