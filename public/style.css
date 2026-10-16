@@ -344,3 +344,18 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .share-all { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 44px; margin: 4px 0 12px; border-radius: 12px; background: var(--brand); color: #fff; font-size: 14.5px; font-weight: 800; }
 .share-all svg.i { width: 18px; height: 18px; }
 .share-all:active { filter: brightness(.94); }
+
+/* 축제 상세 */
+.fest-card { margin: 4px 0 16px; padding: 18px 16px; border-radius: 16px; background: #fff; border: 1px solid #F3DFCF; box-shadow: 0 2px 10px rgba(255, 107, 26, .07); }
+.fest-card h3 { font-size: 16px; font-weight: 800; margin: 0 0 12px; }
+.fest-text { font-size: 14.5px; line-height: 1.6; color: #3B4552; white-space: pre-line; margin: 0 0 12px; }
+.fest-card .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.fest-card .chips span { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--brand-soft); color: var(--brand-dark); font-size: 14px; font-weight: 700; }
+.fest-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.fest-list li { position: relative; padding-left: 14px; font-size: 14.5px; line-height: 1.55; color: #3B4552; word-break: keep-all; }
+.fest-list li::before { content: ''; position: absolute; left: 0; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+.fest-list li b { display: block; color: var(--ink); font-weight: 800; }
+.fest-meta { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #F0D9C6; display: grid; gap: 6px; }
+.fest-meta p { margin: 0; font-size: 13.5px; color: #3B4552; }
+.fest-meta b { display: inline-block; min-width: 68px; color: var(--mute); font-weight: 600; font-size: 12.5px; }
+.fest-meta a { color: var(--brand-dark); font-weight: 800; text-decoration: none; }

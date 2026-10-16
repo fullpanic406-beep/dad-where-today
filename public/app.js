@@ -473,6 +473,40 @@ async function renderSaved() {
 
 /* ---------- 상세 (전체 화면) ---------- */
 const detail = $('#detail'), searchEl = $('#search');
+
+// 축제는 어느 지역·출처든 '무엇을 하는지'를 먼저 보여 주는 축제용 상세로 보여 준다
+const isFest = e => e.category === 'festival';
+function festFacts(e) {
+  const d = new Date(`${e.start_date}T00:00:00`), n = Math.round((d - new Date(`${TODAY}T00:00:00`)) / 864e5);
+  const multi = e.end_date && e.end_date !== e.start_date;
+  const dd = n > 0 ? `D-${n}` : (multi && e.end_date >= TODAY) || n === 0 ? (n === 0 ? '오늘' : '진행 중') : '종료';
+  return `<div class="facts">
+    <div><b>날짜</b><span>${multi ? md(e.start_date) + '~' + md(e.end_date) : md(e.start_date)}</span></div>
+    <div><b>${multi ? '기간' : '동네'}</b><span>${multi ? Math.round((new Date(e.end_date) - d) / 864e5) + 1 + '일간' : esc(e.dong || e.gu)}</span></div>
+    <div><b>남은 날</b><span>${dd}</span></div>
+  </div>`;
+}
+// desc 텍스트(프로그램:/주최·주관:/문의:/· 항목)를 읽기 쉬운 카드로
+function festCard(t) {
+  const prog = [], bullets = [], text = []; let host = '', tel = '';
+  for (const l of t.split('\n').map(x => x.trim()).filter(Boolean)) {
+    let m;
+    if ((m = l.match(/^프로그램:\s*(.+)/))) prog.push(...m[1].split(/\s*[+,，/ㆍ·]\s*/).map(x => x.replace(/\s*등$/, '').trim()).filter(x => x && x !== '등'));
+    else if ((m = l.match(/^주최·주관:\s*(.+)/))) host = m[1];
+    else if ((m = l.match(/^문의:\s*(.+)/))) tel = m[1];
+    else if (l.startsWith('·')) bullets.push(l.replace(/^·\s*/, ''));
+    else text.push(l);
+  }
+  const phone = (tel.match(/\d{2,4}-\d{3,4}-\d{4}|\d{8,}/) || [])[0] || '';
+  const li = b => { const i = b.indexOf(':'); return i > 0 && i < 24 ? `<li><b>${esc(b.slice(0, i))}</b>${esc(b.slice(i + 1).trim())}</li>` : `<li>${esc(b)}</li>`; };
+  const html = `<section class="fest-card"><h3>이런 걸 해요</h3>
+    ${text.length ? `<p class="fest-text">${esc(text.join('\n'))}</p>` : ''}
+    ${prog.length ? `<div class="chips">${prog.map(p => `<span>${esc(p)}</span>`).join('')}</div>` : ''}
+    ${bullets.length ? `<ul class="fest-list">${bullets.map(li).join('')}</ul>` : ''}
+    ${host || tel ? `<div class="fest-meta">${host ? `<p><b>주최·주관</b>${esc(host)}</p>` : ''}${tel ? `<p><b>문의</b>${phone ? `<a href="tel:${phone.replace(/\D/g, '')}">${esc(tel)}</a>` : esc(tel)}</p>` : ''}</div>` : ''}
+  </section>`;
+  return { html: prog.length || bullets.length || text.length || host || tel ? html : '', phone };
+}
 function openDetail(id, push = true) {
   const e = S.cache.get(id); if (!e) return;
   const media = e.image
@@ -487,11 +521,12 @@ function openDetail(id, push = true) {
       <div class="d-body">
         <div class="badges">${badgesHtml(e)}</div>
         <h2>${esc(e.title)}</h2>
-        <div class="facts">
+        ${isFest(e) ? festFacts(e) : `<div class="facts">
           <div><b>요금</b><span>${e.is_free === 1 ? '무료' : e.is_free === 0 ? '유료' : '정보 없음'}</span></div>
           <div><b>대상</b><span>${esc((e.target || '제한 없음').replace(/\s*\(.*?\)/g, '').slice(0, 9))}</span></div>
           <div><b>상태</b><span>${e.dow_label ? esc(e.dow_label) + ' 한정' : e.status ? esc(e.status) : e.start_date > TODAY ? '예정' : '진행 중'}</span></div>
-        </div>
+        </div>`}
+        ${isFest(e) ? '<div id="festBox"></div>' : ''}
         <div class="info">
           <div>${I('calendar')}<p><b>일정</b><span>${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</span></p></div>
           <div>${I('pin')}<p><b>장소</b><span>${esc(where(e))}</span>${map ? `<a class="mini" target="_blank" rel="noopener" href="${map}">지도 보기</a>` : ''}</p></div>
@@ -510,7 +545,16 @@ function openDetail(id, push = true) {
         : map ? `<a class="cta ghost" target="_blank" rel="noopener" href="${map}">지도에서 보기</a>` : `<span class="cta ghost">상세 링크가 없어요</span>`}
     </div></div>`;
   detail.hidden = false;
-  loadDesc(e).then(t => { const el = $('#dDesc'); if (t && el) { el.textContent = t; el.hidden = false; } }).catch(() => {});
+  loadDesc(e).then(t => {
+    if (isFest(e)) {
+      const box = $('#festBox'); if (!t || !box) return;
+      const c = festCard(t); box.innerHTML = c.html;
+      const cta = $('.d-bar .cta.ghost');   // 링크가 없는 축제는 '지도에서 보기' 대신 전화 문의를 큰 버튼으로
+      if (c.phone && cta && !e.link) { cta.className = 'cta'; cta.outerHTML = `<a class="cta" href="tel:${c.phone.replace(/\D/g, '')}">전화로 문의하기</a>`; }
+      return;
+    }
+    const el = $('#dDesc'); if (t && el) { el.textContent = t; el.hidden = false; }
+  }).catch(() => {});
   if (push) history.pushState({ screen: 'detail' }, '');
 }
 function openPlace(id, push = true) {
