@@ -1,0 +1,500 @@
+// 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
+import { loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc } from './data.js';
+
+const $ = s => document.querySelector(s);
+const view = $('#view');
+
+const CAT = { festival: '축제', show: '공연', exhibit: '전시', edu: '체험·교육', kidscafe: '키즈카페', etc: '기타' };
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
+
+/* ---------- 아이콘 (24x24 선 아이콘) ---------- */
+const CLOUD = 'M7 18.5a4 4 0 1 1 .6-7.95A5.5 5.5 0 0 1 18 11.5a3.5 3.5 0 0 1-.5 7z';
+const CLOUD_UP = 'M7 15.5a4 4 0 1 1 .6-7.95A5.5 5.5 0 0 1 18 8.5a3.5 3.5 0 0 1-.5 7z';
+const P = {
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  chevR: '<path d="M9 5l7 7-7 7"/>',
+  heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
+  share: '<path d="M12 15V4M8 8l4-4 4 4M5 12v7h14v-7"/>',
+  pin: '<path d="M12 21s-6-5.5-6-10.5a6 6 0 0 1 12 0C18 15.5 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  ticket: '<path d="M4 9a2 2 0 0 0 0 6v2.5A1.5 1.5 0 0 0 5.5 19h13a1.5 1.5 0 0 0 1.5-1.5V15a2 2 0 0 0 0-6V6.5A1.5 1.5 0 0 0 18.5 5h-13A1.5 1.5 0 0 0 4 6.5z"/><path d="M14 8v8" stroke-dasharray="1.6 2.2"/>',
+  users: '<circle cx="9" cy="9" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="10" r="2.3"/><path d="M16 14.2a4.5 4.5 0 0 1 4.5 4.3"/>',
+  home: '<path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5H9v5.5H5.5A1.5 1.5 0 0 1 4 19z"/>',
+  map: '<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6zM9 4v14M15 6v14"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
+  sparkle: '<path d="M11 3l1.9 5.6L18.5 10.5l-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  gift: '<rect x="4" y="9.5" width="16" height="10.5" rx="2"/><path d="M12 9.5V20M3.5 9.5h17V7h-17zM12 7c-1.5-3.2-5-2.6-4.2-.8M12 7c1.5-3.2 5-2.6 4.2-.8"/>',
+  smile: '<circle cx="12" cy="12" r="8.5"/><path d="M8.3 14c1.2 2.2 6.2 2.2 7.4 0"/><path d="M9 9.8h.01M15 9.8h.01" stroke-width="2.4"/>',
+  flag: '<path d="M5.5 21V4M5.5 5h12l-2.2 4 2.2 4h-12"/>',
+  cloud: `<path d="${CLOUD}"/>`,
+  cloudsun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 2.6v1.2M2.6 8h1.2M4.2 4.2l.9.9M11.8 4.2l-.9.9"/><path d="M9 20a3.5 3.5 0 0 1 .3-7A4.6 4.6 0 0 1 18 14.2 2.9 2.9 0 0 1 17.6 20z"/>',
+  rain: `<path d="${CLOUD_UP}"/><path d="M8.5 18.5l-1 2.5M12.5 18.5l-1 2.5M16.5 18.5l-1 2.5"/>`,
+  snow: `<path d="${CLOUD_UP}"/><path d="M8.5 19h.01M12.5 20.5h.01M16.5 19h.01" stroke-width="2.6"/>`,
+  bolt: `<path d="${CLOUD_UP}"/><path d="M12.8 14l-2.3 3.5h3L11.7 21"/>`,
+};
+const I = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
+
+/* ---------- 유틸 ---------- */
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const md = s => { const d = parse(s); return `${d.getMonth() + 1}.${d.getDate()}(${DOW[d.getDay()]})`; };
+const rangeLabel = (a, b) => (a === b ? md(a) : `${md(a)} ~ ${md(b)}`);
+const whenText = e => `${rangeLabel(e.start_date, e.end_date)}${e.dow_label ? (e.dow_label === '주말' ? ' · 주말마다' : ` · 매주 ${e.dow_label}`) : ''}`;
+const where = e => (e.place && !e.place.includes(e.gu) ? `${e.gu} · ${e.place}` : e.place || e.gu);
+const catKey = e => (CAT[e.category] ? e.category : 'etc');
+const catImg = e => (e.category === 'kidscafe' ? 'edu' : catKey(e)); // 대체 일러스트(사진이 없을 때)
+const store = {
+  get(k, def) { try { return JSON.parse(localStorage.getItem('ado.' + k)) ?? def; } catch { return def; } },
+  set(k, v) { try { localStorage.setItem('ado.' + k, JSON.stringify(v)); } catch { /* 저장 불가 환경 */ } },
+};
+const api = async (path, params = {}) => {
+  const p = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v != null && v !== false));
+  if (path === '/api/events') return queryEvents(p);
+  if (path === '/api/calendar') return queryCalendar(p);
+  if (path === '/api/summary') return querySummary(p);
+  if (path === '/api/meta') return loadMeta();
+  throw new Error(path);
+};
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 1800);
+}
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* ---------- 상태 ---------- */
+const TODAY = iso(new Date());
+function weekendOf(s) { // s 기준 이번 주말(토·일). 토요일이면 오늘~내일, 일요일이면 오늘
+  const dow = parse(s).getDay();
+  if (dow === 0) return [s, s];
+  const sat = addDays(s, 6 - dow);
+  return [sat, addDays(sat, 1)];
+}
+const S = {
+  tab: 'home',
+  gu: store.get('gu', '양천구'),
+  from: TODAY, to: TODAY, anchor: TODAY, weekOnly: false,
+  family: false, free: false, cat: '',
+  searchAll: false,
+  saved: new Set(store.get('saved', [])),
+  cache: new Map(), meta: null, mapData: null, weather: null,
+};
+const filterParams = () => ({ family: S.family ? 1 : '', free: S.free ? 1 : '', cat: S.cat });
+const modeOf = () => {
+  if (S.from === TODAY && S.to === TODAY) return 'today';
+  if (S.from === addDays(TODAY, 1) && S.to === S.from) return 'tomorrow';
+  const [a, b] = weekendOf(TODAY);
+  return S.from === a && S.to === b ? 'weekend' : 'day';
+};
+function setRange(from, to) { S.from = from; S.to = to; S.anchor = from; }
+
+/* ---------- 날씨 (Open-Meteo, 키 불필요) ---------- */
+const wxIcon = c => c === 0 ? 'sun' : c <= 2 ? 'cloudsun' : c <= 48 ? 'cloud' : c <= 67 ? 'rain'
+  : c <= 77 ? 'snow' : c <= 82 ? 'rain' : c <= 86 ? 'snow' : 'bolt';
+async function loadWeather() {
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FSeoul&forecast_days=16');
+    const j = await r.json();
+    S.weather = Object.fromEntries(j.daily.time.map((t, i) => [t, {
+      code: j.daily.weathercode[i], max: Math.round(j.daily.temperature_2m_max[i]),
+      min: Math.round(j.daily.temperature_2m_min[i]), rain: j.daily.precipitation_probability_max[i],
+    }]));
+  } catch { S.weather = {}; }
+}
+function wxPill(day) {
+  const w = S.weather?.[day]; if (!w) return '';
+  const rainy = w.rain >= 60;
+  return `<div class="wx ${rainy ? 'rain' : ''}">${I(rainy ? 'rain' : wxIcon(w.code))}<span>${w.min}~${w.max}°${rainy ? ` · 비 ${w.rain}%` : ''}</span></div>`;
+}
+
+/* ---------- 공통 조각 ---------- */
+const thumb = e => `<img src="img/cat-${catImg(e)}.jpg" alt="">${e.image ? `<img class="ev" src="${esc(e.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}`;
+const heartBtn = e => `<button class="heart ${S.saved.has(e.id) ? 'on' : ''}" data-heart="${esc(e.id)}" aria-label="저장">${I('heart')}</button>`;
+const statusBadge = e => !e.status ? '' : e.status === '접수중' ? '<span class="badge open">접수중</span>'
+  : e.status === '안내중' ? '<span class="badge soon">접수 예정</span>' : '<span class="badge">마감</span>';
+const badgesHtml = e => `${e.dow_label ? `<span class="badge wk">${e.dow_label} 한정</span>` : ''}${statusBadge(e)}<span class="badge">${CAT[e.category] ?? '기타'}</span>${e.is_free === 1 ? '<span class="badge free">무료</span>' : ''}${e.family ? '<span class="badge kid">아이와</span>' : ''}`;
+
+function rowHtml(e) {
+  S.cache.set(e.id, e);
+  return `<div class="row" data-id="${esc(e.id)}" role="button" tabindex="0">
+    <div class="ph">${thumb(e)}</div>
+    <div class="body">
+      <div class="badges">${badgesHtml(e)}</div>
+      <h3>${esc(e.title)}</h3>
+      <div class="meta">${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</div>
+      <div class="meta dim">${esc(where(e))}</div>
+    </div>${heartBtn(e)}</div>`;
+}
+function pcardHtml(e) {
+  S.cache.set(e.id, e);
+  return `<button class="pcard" data-id="${esc(e.id)}">
+    <div class="ph">${thumb(e)}<div class="tags">${e.is_free === 1 ? '<span class="tag free">무료</span>' : ''}${e.family ? '<span class="tag kid">아이와</span>' : ''}</div></div>
+    <h3>${esc(e.title)}</h3>
+    <div class="m">${whenText(e)}</div>
+  </button>`;
+}
+const emptyHtml = (title, msg) => `<div class="empty"><img src="img/empty.jpg" alt=""><b>${title}</b>${msg}</div>`;
+
+/* ---------- 홈 ---------- */
+function updatedLabel() {
+  if (!S.meta?.generatedAt) return '';
+  const d = new Date(new Date(S.meta.generatedAt).getTime() + 9 * 3600 * 1000); // 한국 시간
+  return `마지막 업데이트 ${d.getUTCMonth() + 1}.${d.getUTCDate()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
+async function renderHome() {
+  const [w0, w1] = weekendOf(TODAY);
+  const [wk, td, fr, kc] = await Promise.all([
+    api('/api/events', { gu: S.gu, from: w0, to: w1 }),
+    api('/api/events', { gu: S.gu, from: TODAY, to: TODAY }),
+    api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), free: 1 }),
+    api('/api/events', { gu: S.gu, from: TODAY, to: w1, cat: 'kidscafe' }),
+  ]);
+  const sc = [['today', 'sun', '오늘'], ['weekend', 'sparkle', '이번 주말'], ['free', 'gift', '무료'], ['kids', 'smile', '아이와'], ['festival', 'flag', '축제']];
+
+  const section = (title, list, more) => list.events.length ? `
+    <section class="sec">
+      <div class="sec-head"><h2>${title}</h2><button class="more" data-go="${more}">더보기${I('chevR')}</button></div>
+      <div class="rail">${list.events.slice(0, 10).map(pcardHtml).join('')}</div>
+    </section>` : '';
+
+  view.innerHTML = `
+    <section class="hero">
+      <img src="img/hero.jpg" alt="">
+      ${wxPill(TODAY)}
+      <div class="hero-text">
+        <span class="eyebrow">${esc(S.gu)}</span>
+        <h2>우리 가족의 주말을<br>지켜주는 히어로</h2>
+        <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>
+      </div>
+    </section>
+    <section class="sec"><div class="shortcuts">${sc.map(([k, ic, t]) => `<button data-go="${k}"><span class="tile">${I(ic)}</span>${t}</button>`).join('')}</div></section>
+    ${section('이번 주말 가볼 만한 곳', wk, 'weekend')}
+    ${td.events.length ? `<section class="sec">
+      <div class="sec-head"><h2>오늘 열리는 행사</h2><button class="more" data-go="today">더보기${I('chevR')}</button></div>
+      <div class="list">${td.events.slice(0, 4).map(rowHtml).join('')}</div></section>` : ''}
+    ${section('무료로 즐기는 행사', fr, 'free')}
+    ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe')}
+    ${!wk.events.length && !td.events.length && !fr.events.length && !kc.events.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
+    <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
+}
+
+/* ---------- 캘린더 ---------- */
+async function renderCal() {
+  const first = parse(S.anchor); first.setDate(1);
+  let cells = [];
+  if (S.weekOnly) {
+    const a = parse(S.anchor); a.setDate(a.getDate() - a.getDay());
+    for (let i = 0; i < 7; i++) { const d = new Date(a); d.setDate(a.getDate() + i); cells.push(iso(d)); }
+  } else {
+    const start = new Date(first); start.setDate(1 - first.getDay());
+    const rows = Math.ceil((first.getDay() + new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()) / 7);
+    for (let i = 0; i < rows * 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); cells.push(iso(d)); }
+  }
+  const months = [...new Set(cells.map(c => c.slice(0, 7)))];
+  const [cals, list] = await Promise.all([
+    Promise.all(months.map(m => api('/api/calendar', { month: m, gu: S.gu, ...filterParams() }))),
+    api('/api/events', { gu: S.gu, from: S.from, to: S.to, ...filterParams() }),
+  ]);
+  const days = Object.assign({}, ...cals.map(c => c.days));
+  const curMonth = S.anchor.slice(0, 7);
+  const a0 = parse(cells[0]);
+  const title = S.weekOnly ? `${a0.getMonth() + 1}월 ${Math.ceil((a0.getDate() + 6) / 7)}주` : `${parse(S.anchor).getFullYear()}년 ${parse(S.anchor).getMonth() + 1}월`;
+
+  const cellHtml = d => {
+    const info = days[d], dt = parse(d), inRange = d >= S.from && d <= S.to, multi = S.from !== S.to;
+    const cls = ['day', dt.getDay() === 0 ? 'sun' : dt.getDay() === 6 ? 'sat' : '', d === TODAY ? 'today' : '',
+      !S.weekOnly && d.slice(0, 7) !== curMonth ? 'out' : '',
+      inRange && multi ? 'range' : '', inRange && multi && d === S.from ? 'rs' : '', inRange && multi && d === S.to ? 're' : '',
+      inRange && !multi ? 'sel' : ''].join(' ');
+    const pt = `<span class="pt">${info?.s || ''}</span>`; // 7일 이하 단기 행사 수만 표시
+    return `<button class="${cls}" data-day="${d}"><span class="n">${dt.getDate()}</span>${pt}</button>`;
+  };
+
+  const m = modeOf();
+  const head = rangeLabel(S.from, S.to);
+  view.innerHTML = `
+    <div class="quick">
+      <button data-quick="today" class="${m === 'today' ? 'on' : ''}">오늘</button>
+      <button data-quick="tomorrow" class="${m === 'tomorrow' ? 'on' : ''}">내일</button>
+      <button data-quick="weekend" class="${m === 'weekend' ? 'on' : ''}">이번 주말</button>
+    </div>
+    <div class="cal">
+      <div class="cal-head"><h2>${title}</h2>
+        <div class="nav"><button class="toggle" data-weektoggle>${S.weekOnly ? '월간' : '주간'}</button>
+        <button data-nav="-1" aria-label="이전">${I('back')}</button><button data-nav="1" aria-label="다음">${I('chevR')}</button></div></div>
+      <div class="grid">${DOW.map(d => `<div class="dow">${d}</div>`).join('')}${cells.map(cellHtml).join('')}</div>
+    </div>
+    <section class="sec">
+      <div class="chips">
+        <button class="chip kid ${S.family ? 'on' : ''}" data-f="family">아이와</button>
+        <button class="chip free ${S.free ? 'on' : ''}" data-f="free">무료만</button>
+        <span class="sep"></span>
+        ${[['', '전체'], ...Object.entries(CAT)].map(([k, v]) => `<button class="chip ${S.cat === k ? 'on' : ''}" data-cat="${k}">${v}</button>`).join('')}
+      </div>
+      <div class="result-head" style="margin-top:18px"><h2>${head}</h2><span>${esc(S.gu)} · ${list.total}건</span></div>
+      ${list.events.length ? `<div class="list">${list.events.map(rowHtml).join('')}</div>`
+        : emptyHtml('이 날은 행사가 없어요', `다른 날짜나 지역을 골라 보세요.${S.family || S.free || S.cat ? '<br>필터를 풀면 더 나올 수 있어요.' : ''}`)}
+      ${list.total > list.events.length ? `<p class="foot-note" style="padding-bottom:0">상위 ${list.events.length}건만 보여요. 필터로 좁혀 보세요.</p>` : ''}
+    </section>`;
+}
+
+/* ---------- 구 지도 ---------- */
+const SCALE = ['#FFE6D4', '#FFC9A3', '#FFA66E', '#FF8441', '#E85A0C'];
+async function renderMap() {
+  if (!S.mapData) S.mapData = await (await fetch('seoul-map.json')).json();
+  const sum = (await api('/api/summary', { from: S.from, to: S.to, ...filterParams() })).gu;
+  const max = Math.max(1, ...Object.values(sum).map(v => v.n));
+  const fill = n => !n ? '#EDEFF2' : SCALE[Math.min(4, Math.ceil((n / max) * 5) - 1)];
+  const { viewBox, districts } = S.mapData;
+  const n = sum[S.gu]?.n ?? 0;
+  view.innerHTML = `
+    <div class="map-sub"><b>${rangeLabel(S.from, S.to)}</b> 기준 구별 행사 수예요. 지역을 눌러 골라 보세요.</div>
+    <div class="map-card">
+      <svg viewBox="${viewBox}" role="img" aria-label="서울 구 지도">
+        ${districts.map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" class="${d.name === S.gu ? 'sel' : ''}"/>`).join('')}
+        ${districts.map(d => `<text x="${d.cx}" y="${d.cy + 5}">${d.name.replace('구', '')}</text>`).join('')}
+      </svg>
+      <div class="legend">적음 ${SCALE.map(c => `<i style="background:${c}"></i>`).join('')} 많음 <span style="margin-left:auto">회색 = 없음</span></div>
+    </div>
+    <div class="map-go"><button class="go-btn" data-gotab="cal">${esc(S.gu)} 행사 ${n}건 보기</button></div>
+    <section class="sec"><div class="gu-list">${districts.map(d => `<button data-gu="${d.name}" class="${d.name === S.gu ? 'on' : ''}">${d.name}<small>${sum[d.name]?.n ?? 0}건</small></button>`).join('')}</div></section>`;
+}
+
+/* ---------- 저장 ---------- */
+async function renderSaved() {
+  const ids = [...S.saved];
+  if (!ids.length) { view.innerHTML = `<section class="sec" style="min-height:60%">${emptyHtml('저장한 행사가 없어요', '마음에 드는 행사의 하트를 눌러 두면 여기 모여요.')}</section>`; return; }
+  const { events } = await api('/api/events', { ids: ids.join(',') });
+  const gone = ids.length - events.length;
+  events.sort((a, b) => a.start_date.localeCompare(b.start_date));
+  view.innerHTML = `<section class="sec"><div class="result-head"><h2>저장한 행사</h2><span>${events.length}건</span></div>
+    <div class="list">${events.map(rowHtml).join('')}</div>
+    ${gone > 0 ? `<p class="foot-note">종료되었거나 사라진 행사 ${gone}건은 숨겼어요.</p>` : ''}</section>`;
+}
+
+/* ---------- 상세 (전체 화면) ---------- */
+const detail = $('#detail'), searchEl = $('#search');
+function openDetail(id, push = true) {
+  const e = S.cache.get(id); if (!e) return;
+  const media = e.image
+    ? `<div class="bg" style="background-image:url('${esc(e.image)}')"></div><img class="main" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : `<img class="cover" src="img/cat-${catImg(e)}.jpg" alt="">`;
+  const map = e.place ? `https://map.naver.com/p/search/${encodeURIComponent((e.place.includes(e.gu) ? '' : e.gu + ' ') + e.place)}` : '';
+  detail.innerHTML = `<div class="screen">
+    <div class="d-scroll">
+      <div class="d-media">${media}
+        <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button><button data-share="${esc(id)}" aria-label="공유">${I('share')}</button></div>
+      </div>
+      <div class="d-body">
+        <div class="badges">${badgesHtml(e)}</div>
+        <h2>${esc(e.title)}</h2>
+        <div class="info">
+          <div>${I('calendar')}<p><b>일정</b><span>${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</span></p></div>
+          <div>${I('pin')}<p><b>장소</b><span>${esc(where(e))}</span>${map ? `<a class="mini" target="_blank" rel="noopener" href="${map}">지도 보기</a>` : ''}</p></div>
+          ${e.rcpt_start ? `<div>${I('clock')}<p><b>예약 접수</b><span>${md(e.rcpt_start)} ~ ${md(e.rcpt_end)}${e.status ? ' · ' + esc(e.status) : ''}</span></p></div>` : ''}
+          <div>${I('ticket')}<p><b>요금</b><span>${esc(e.fee) || (e.is_free === 1 ? '무료' : '정보 없음')}</span></p></div>
+          ${e.target ? `<div>${I('users')}<p><b>대상</b><span>${esc(e.target)}</span></p></div>` : ''}
+        </div>
+        <p class="d-desc" id="dDesc" hidden></p>
+        <p class="d-note">${e.source === 'yeyak' ? '서울시 공공서비스예약 정보(공공누리 1유형) 기준이에요.' : e.source === 'yeogijeogi' ? '서울시 우리동네 키움포털 정보 기준이에요.' : '서울 열린데이터광장(서울시 문화행사 정보) 기준이에요.'} 일정·요금·접수 상태는 바뀔 수 있으니 방문 전에 상세 페이지에서 확인해 주세요.</p>
+      </div>
+    </div>
+    <div class="d-bar">
+      <button class="sq ${S.saved.has(id) ? 'on' : ''}" data-dheart="${esc(id)}" aria-label="저장">${I('heart')}</button>
+      ${e.link ? `<a class="cta" target="_blank" rel="noopener" href="${esc(e.link)}">${e.source === 'yeogijeogi' ? '예약하러 가기' : e.source === 'yeyak' ? (e.status === '접수중' ? '예약하러 가기' : '예약 페이지 보기') : '상세 정보 보기'}</a>`
+        : map ? `<a class="cta ghost" target="_blank" rel="noopener" href="${map}">지도에서 보기</a>` : `<span class="cta ghost">상세 링크가 없어요</span>`}
+    </div></div>`;
+  detail.hidden = false;
+  loadDesc(e).then(t => { const el = $('#dDesc'); if (t && el) { el.textContent = t; el.hidden = false; } }).catch(() => {});
+  if (push) history.pushState({ screen: 'detail' }, '');
+}
+function hideScreens() { detail.hidden = true; searchEl.hidden = true; }
+function closeScreen() { if (history.state?.screen) history.back(); else hideScreens(); }
+window.addEventListener('popstate', () => { if (!detail.hidden && !searchEl.hidden) detail.hidden = true; else hideScreens(); });
+
+/* ---------- 검색 ---------- */
+function openSearch(q = '') {
+  searchEl.innerHTML = `<div class="screen">
+    <div class="s-top"><button class="icon-btn" data-close aria-label="뒤로">${I('back')}</button>
+      <label class="field">${I('search')}<input id="sInput" type="search" placeholder="행사명, 장소로 검색" autocomplete="off" value="${esc(q)}"></label></div>
+    <div class="s-scope" id="sScope"></div>
+    <div class="s-body" id="sBody"></div></div>`;
+  searchEl.hidden = false;
+  history.pushState({ screen: 'search' }, '');
+  drawScope(); runSearch();
+  const input = $('#sInput'); input.focus();
+  input.addEventListener('input', debounce(runSearch, 250));
+}
+function drawScope() {
+  $('#sScope').innerHTML = `<button class="chip ${S.searchAll ? '' : 'on'}" data-scope="gu">${esc(S.gu)}</button><button class="chip ${S.searchAll ? 'on' : ''}" data-scope="all">서울 전체</button>`;
+}
+async function runSearch() {
+  const q = ($('#sInput')?.value ?? '').trim(), body = $('#sBody'); if (!body) return;
+  if (!q) {
+    body.innerHTML = `<div class="empty" style="padding-top:36px"><b>어떤 행사를 찾으세요?</b>행사 이름이나 장소로 검색해 보세요.<br><br>
+      <span class="chips" style="justify-content:center;flex-wrap:wrap;margin:0">${['축제', '전시', '체험', '공원', '도서관', '콘서트'].map(k => `<button class="chip" data-kw="${k}">${k}</button>`).join('')}</span></div>`;
+    return;
+  }
+  const r = await api('/api/events', { q, all: 1, from: TODAY, to: addDays(TODAY, 365), gu: S.searchAll ? '' : S.gu });
+  if (($('#sInput')?.value ?? '').trim() !== q) return; // 입력이 바뀌었으면 버림
+  body.innerHTML = r.events.length
+    ? `<div class="result-head" style="margin-top:6px"><h2>검색 결과</h2><span>${r.total}건</span></div><div class="list" style="margin:0 -16px">${r.events.map(rowHtml).join('')}</div>`
+    : emptyHtml('검색 결과가 없어요', S.searchAll ? '다른 단어로 찾아 보세요.' : '“서울 전체”로 넓혀 보세요.');
+}
+
+/* ---------- 공유·저장 ---------- */
+function toggleSave(id) {
+  S.saved.has(id) ? S.saved.delete(id) : S.saved.add(id);
+  store.set('saved', [...S.saved]);
+  toast(S.saved.has(id) ? '저장했어요' : '저장을 뺐어요');
+}
+async function share(id) {
+  const e = S.cache.get(id); if (!e) return;
+  const text = `${e.title}\n${rangeLabel(e.start_date, e.end_date)} · ${where(e)}`;
+  const url = `${location.origin}${location.pathname}?d=${encodeURIComponent(id)}&g=${encodeURIComponent(e.gu)}`;
+  try {
+    if (navigator.share) await navigator.share({ title: e.title, text, url });
+    else { await navigator.clipboard.writeText(`${text}\n${url}`); toast('링크를 복사했어요'); }
+  } catch { /* 공유 취소 */ }
+}
+
+/* ---------- 헤더·탭·렌더 ---------- */
+const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['map', 'map', '구 지도'], ['saved', 'heart', '저장']];
+function renderChrome() {
+  $('#regionBtn').innerHTML = `${I('pin')}${esc(S.gu)}`;
+  $('#searchBtn').innerHTML = I('search');
+  $('#tabs').innerHTML = TABS.map(([k, ic, t]) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${I(ic)}<span>${t}</span></button>`).join('');
+}
+async function render(keepScroll = true) {
+  const y = keepScroll ? view.scrollTop : 0;
+  renderChrome();
+  try {
+    await ({ home: renderHome, cal: renderCal, map: renderMap, saved: renderSaved }[S.tab])();
+  } catch (err) {
+    console.error(err);
+    view.innerHTML = `<section class="sec">${emptyHtml('불러오지 못했어요', '서버 연결을 확인하고 다시 시도해 주세요.')}</section>`;
+  }
+  view.scrollTop = y;
+}
+const setTab = t => { S.tab = t; render(false); };
+function go(kind) {
+  S.family = false; S.free = false; S.cat = '';
+  if (kind === 'today') setRange(TODAY, TODAY);
+  else if (kind === 'weekend') setRange(...weekendOf(TODAY));
+  else if (kind === 'free') { S.free = true; setRange(TODAY, addDays(TODAY, 6)); }
+  else if (kind === 'kids') { S.family = true; setRange(...weekendOf(TODAY)); }
+  else if (kind === 'festival') { S.cat = 'festival'; setRange(TODAY, addDays(TODAY, 13)); }
+  else if (kind === 'kidscafe') { S.cat = 'kidscafe'; setRange(TODAY, weekendOf(TODAY)[1]); }
+  setTab('cal');
+}
+const refreshDetailHeart = id => { const b = detail.querySelector('[data-dheart]'); if (b) b.classList.toggle('on', S.saved.has(id)); };
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  const heart = t.closest('[data-heart]');
+  if (heart) { toggleSave(heart.dataset.heart); heart.classList.toggle('on', S.saved.has(heart.dataset.heart)); if (S.tab === 'saved') render(); return; }
+  const dh = t.closest('[data-dheart]');
+  if (dh) { toggleSave(dh.dataset.dheart); refreshDetailHeart(dh.dataset.dheart); return; }
+  const sh = t.closest('[data-share]'); if (sh) return share(sh.dataset.share);
+  if (t.closest('[data-close]')) return closeScreen();
+  const card = t.closest('[data-id]'); if (card) return openDetail(card.dataset.id);
+
+  const kw = t.closest('[data-kw]');
+  if (kw) { $('#sInput').value = kw.dataset.kw; return runSearch(); }
+  const sc = t.closest('[data-scope]');
+  if (sc) { S.searchAll = sc.dataset.scope === 'all'; drawScope(); return runSearch(); }
+
+  const tab = t.closest('#tabs [data-tab]'); if (tab) return setTab(tab.dataset.tab);
+  if (t.closest('#regionBtn')) return setTab('map');
+  if (t.closest('#searchBtn')) return openSearch();
+  const g = t.closest('[data-go]'); if (g) return go(g.dataset.go);
+  const gt = t.closest('[data-gotab]'); if (gt) { if (S.tab === 'map') { setRange(TODAY, TODAY); } return setTab(gt.dataset.gotab); }
+
+  const day = t.closest('[data-day]'); if (day) { setRange(day.dataset.day, day.dataset.day); return render(); }
+  const quick = t.closest('[data-quick]');
+  if (quick) {
+    const q = quick.dataset.quick;
+    if (q === 'today') setRange(TODAY, TODAY);
+    else if (q === 'tomorrow') setRange(addDays(TODAY, 1), addDays(TODAY, 1));
+    else setRange(...weekendOf(TODAY));
+    return render();
+  }
+  const nav = t.closest('[data-nav]');
+  if (nav) {
+    const n = Number(nav.dataset.nav);
+    if (S.weekOnly) S.anchor = addDays(S.anchor, 7 * n);
+    else { const d = parse(S.anchor); d.setDate(1); d.setMonth(d.getMonth() + n); S.anchor = iso(d); }
+    return render();
+  }
+  if (t.closest('[data-weektoggle]')) { S.weekOnly = !S.weekOnly; if (S.weekOnly) S.anchor = S.from; return render(); }
+  const f = t.closest('[data-f]'); if (f) { S[f.dataset.f] = !S[f.dataset.f]; return render(); }
+  const cat = t.closest('[data-cat]'); if (cat) { S.cat = cat.dataset.cat; return render(); }
+
+  const gu = t.closest('[data-gu]');
+  if (gu) { S.gu = gu.dataset.gu; store.set('gu', S.gu); toast(`${S.gu}로 바꿨어요`); return render(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && (!detail.hidden || !searchEl.hidden)) closeScreen();
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('.row[data-id]')) { e.preventDefault(); openDetail(e.target.dataset.id); }
+});
+
+/* ---------- 시작 화면: 대화하듯 나오는 로딩 ---------- */
+const PREP = ['피크닉 도시락 싸는 중', '돗자리 챙기는 중', '아이 양말 짝 맞추는 중', '선크림 바르는 중', '물티슈 넉넉히 넣는 중',
+  '애기랑 같이 준비하는 중', '간식 몰래 한 봉지 더 넣는 중', '날씨 보고 우산 챙기는 중', '주차 자리 걱정하는 중', '아이 신발 신기는 중'];
+function startSplash() {
+  const el = $('#splash'), chat = $('#spChat');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let fast = reduce; // 탭하면 건너뛴다
+  el.addEventListener('click', () => { fast = true; });
+  const wait = ms => new Promise(r => (fast ? r() : setTimeout(r, ms)));
+  const say = (who, text) => {
+    const m = document.createElement('div'); m.className = `sp-msg ${who}`;
+    m.innerHTML = `<img src="img/avatar-${who}.jpg" alt=""><div class="sp-bubble">${esc(text)}</div>`;
+    chat.appendChild(m);
+  };
+  const items = [...PREP].sort(() => Math.random() - 0.5).slice(0, 3).concat('오늘 갈 곳 찾는 중');
+  let list, rows = [];
+  const intro = (async () => {
+    await wait(250); say('kid', '아빠~ 오늘 어디가?');
+    await wait(900); say('dad', '음… 잠깐만! 챙길 게 있어');
+    await wait(900);
+    list = document.createElement('div'); list.className = 'sp-list'; chat.appendChild(list);
+    for (let i = 0; i < items.length; i++) {
+      const row = document.createElement('div'); row.className = 'sp-item';
+      row.innerHTML = `<i class="ck"></i><span>${esc(items[i])}</span>`; list.appendChild(row); rows.push(row);
+      if (i < items.length - 1) { await wait(700); row.classList.add('done'); }
+    }
+  })();
+  return {
+    // 실제 데이터 로딩이 끝난 뒤 마지막 항목을 체크하고 닫는다
+    async finish() {
+      await intro; await wait(450);
+      rows.at(-1)?.classList.add('done');
+      await wait(350); say('dad', '다 챙겼다! 출발~');
+      await wait(750);
+      el.classList.add('out'); setTimeout(() => el.remove(), 500);
+    },
+  };
+}
+
+(async function init() {
+  const splash = startSplash();
+  renderChrome();
+  view.innerHTML = `<div class="loading"><img src="img/logo.png" alt="">갈 곳을 찾는 중…</div>`;
+  const [meta] = await Promise.all([api('/api/meta').catch(() => null), loadWeather()]);
+  S.meta = meta;
+  const qs = new URLSearchParams(location.search);
+  if (['home', 'cal', 'map', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
+  await render(false);
+  const d = qs.get('d'); // 공유 링크: ?d=<행사 id>&g=<구>
+  if (d) {
+    const found = (await loadGu(qs.get('g') || S.gu).catch(() => [])).find(e => e.id === d);
+    if (found) { S.cache.set(d, found); openDetail(d, false); }
+  }
+  if (qs.has('search')) openSearch(qs.get('search'));
+  await splash.finish();
+})();

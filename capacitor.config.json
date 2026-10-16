@@ -1,0 +1,7 @@
+{
+  "appId": "com.example.dadwheretoday",
+  "appName": "아빠 오늘 어디가",
+  "webDir": "public",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false }
+}

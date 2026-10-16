@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="description" content="우리 동네 주말 나들이·행사를 캘린더로 — 아빠 오늘 어디가">
+  <title>아빠 오늘 어디가</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="img/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="top">
+      <div class="brand"><img class="logo" src="img/logo.png" alt=""><h1>아빠 오늘 어디가</h1></div>
+      <div class="top-actions">
+        <button id="regionBtn" class="region" aria-label="지역 바꾸기"></button>
+        <button id="searchBtn" class="icon-btn" aria-label="검색"></button>
+      </div>
+    </header>
+    <main id="view"></main>
+    <nav class="tabs" id="tabs"></nav>
+    <section id="detail" hidden></section>
+    <section id="search" hidden></section>
+    <div id="toast" hidden></div>
+    <section id="splash" aria-live="polite">
+      <div class="sp-art"><img src="img/hero.jpg" alt=""></div>
+      <div class="sp-chat" id="spChat"></div>
+      <p class="sp-brand">아빠 오늘 어디가</p>
+    </section>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

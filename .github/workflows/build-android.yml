@@ -1,0 +1,49 @@
+name: 안드로이드 앱 빌드 (테스트용 APK)
+
+on:
+  workflow_dispatch:   # Actions 탭에서 수동 실행
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      # 앱 안에 넣을 데이터 스냅샷(오프라인 대비). 평소에는 아래 배포 주소의 최신 데이터를 읽는다.
+      - name: 행사 수집
+        env:
+          SEOUL_API_KEY: ${{ secrets.SEOUL_API_KEY }}
+        run: |
+          test -n "$SEOUL_API_KEY" || { echo "::error::SEOUL_API_KEY 시크릿이 설정되지 않았습니다"; exit 1; }
+          node src/ingest.js
+
+      - name: 앱이 읽을 데이터 주소 설정 (GitHub Pages)
+        run: node scripts/set-data-base.js "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - run: npx cap sync android
+
+      - name: 디버그 APK 빌드
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abba-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

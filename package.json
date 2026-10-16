@@ -1,0 +1,23 @@
+{
+  "name": "dad-where-today",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "아빠 오늘 어디가 — 서울 구별 가족 나들이·행사 캘린더 웹앱",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "ingest": "node src/ingest.js",
+    "build:map": "node scripts/build-map.js",
+    "set:data-base": "node scripts/set-data-base.js",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  }
+}

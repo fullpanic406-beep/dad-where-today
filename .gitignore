@@ -1,0 +1,14 @@
+# 비밀 값 — 절대 올리지 않는다
+.env
+api.txt
+
+# 수집 결과는 GitHub Actions 가 매일 새로 만든다
+public/data/
+
+node_modules/
+*.log
+
+# 예전 SQLite 잔여 파일
+data/*.db*
+data/*.log
+data/*.err
