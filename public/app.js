@@ -95,21 +95,43 @@ function setRange(from, to) { S.from = from; S.to = to; S.anchor = from; }
 /* ---------- 날씨 (Open-Meteo, 키 불필요) ---------- */
 const wxIcon = c => c === 0 ? 'sun' : c <= 2 ? 'cloudsun' : c <= 48 ? 'cloud' : c <= 67 ? 'rain'
   : c <= 77 ? 'snow' : c <= 82 ? 'rain' : c <= 86 ? 'snow' : 'bolt';
+// 아이와 나가 노는 시간(10:00~18:00)의 시간대별 예보만 본다.
+// 하루 최대 강수확률은 새벽·밤 값이 섞여 우천 판단에 부정확해서 쓰지 않는다.
+const PLAY_FROM = 10, PLAY_TO = 18;
 async function loadWeather() {
   try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FSeoul&forecast_days=16');
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&hourly=precipitation_probability,precipitation,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=16');
     const j = await r.json();
-    S.weather = Object.fromEntries(j.daily.time.map((t, i) => [t, {
-      code: j.daily.weathercode[i], max: Math.round(j.daily.temperature_2m_max[i]),
-      min: Math.round(j.daily.temperature_2m_min[i]), rain: j.daily.precipitation_probability_max[i],
-    }]));
+    const byDay = {};
+    j.hourly.time.forEach((t, i) => {
+      const hr = Number(t.slice(11, 13));
+      if (hr < PLAY_FROM || hr >= PLAY_TO) return;
+      (byDay[t.slice(0, 10)] ??= []).push({ hr, p: j.hourly.precipitation_probability[i] ?? 0, mm: j.hourly.precipitation[i] ?? 0, code: j.hourly.weathercode[i] });
+    });
+    S.weather = Object.fromEntries(j.daily.time.map((t, i) => {
+      const hrs = byDay[t] ?? [];
+      const maxP = Math.max(0, ...hrs.map(h => h.p)), sumMm = hrs.reduce((acc, h) => acc + h.mm, 0);
+      const start = hrs.find(h => h.mm >= 0.5)?.hr; // 눈에 띄게 오기 시작하는 시각
+      // rain: 비 옴 / chance: 올 수도 있음 / low: 확률은 있으나 예상 강수 거의 없음 / dry: 걱정 없음
+      const status = start != null || sumMm >= 1 ? 'rain' : maxP >= 60 || sumMm >= 0.1 ? 'chance' : maxP >= 40 ? 'low' : 'dry';
+      return [t, { code: (hrs.find(h => h.hr === 13) ?? hrs[0])?.code ?? 0, max: Math.round(j.daily.temperature_2m_max[i]), min: Math.round(j.daily.temperature_2m_min[i]),
+        status, start: start ?? hrs.find(h => h.mm >= 0.1)?.hr, maxP, sumMm: Math.round(sumMm * 10) / 10 }];
+    }));
   } catch { S.weather = {}; }
 }
+const wxShort = w => w.status === 'rain' ? (w.start != null ? `${w.start}시부터 비` : '비 예보') : w.status === 'chance' ? '비 올 수도 있어요'
+  : w.status === 'low' ? '비 걱정 적어요' : '비 걱정 없어요';
 function wxPill(day) {
   const w = S.weather?.[day]; if (!w) return '';
-  const rainy = w.rain >= 60;
-  return `<div class="wx ${rainy ? 'rain' : ''}">${I(rainy ? 'rain' : wxIcon(w.code))}<span>${w.min}~${w.max}°${rainy ? ` · 비 ${w.rain}%` : ''}</span></div>`;
+  const rainy = w.status === 'rain';
+  return `<div class="wx ${rainy ? 'rain' : ''}">${I(rainy || w.status === 'chance' ? 'rain' : wxIcon(w.code))}<span>${w.min}~${w.max}° · ${rainy ? wxShort(w) : '낮 ' + wxShort(w)}</span></div>`;
 }
+// 이번 주말 두 날의 놀이 시간대 날씨 요약 (예: "토 비 걱정 없어요 · 일 13시부터 비")
+function weekendWx(w0, w1) {
+  const days = [...new Set([w0, w1])].filter(d => S.weather?.[d]);
+  return days.length ? days.map(d => `${DOW[parse(d).getDay()]} ${wxShort(S.weather[d])}`).join(' · ') : '';
+}
+const rainSoon = days => days.some(d => ['rain', 'chance'].includes(S.weather?.[d]?.status));
 
 /* ---------- 공통 조각 ---------- */
 const thumb = e => `<img src="img/i-${catImg(e)}.jpg" alt="">${e.image ? `<img class="ev" src="${esc(e.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}`;
@@ -191,12 +213,12 @@ async function renderHome() {
       </div>
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
-    ${section('이번 주말 가볼 만한 곳', wk, 'weekend', '아이와 가기 좋은 순서로 골랐어요', feat)}
+    ${section('이번 주말 가볼 만한 곳', wk, 'weekend', weekendWx(w0, w1) || '아이와 가기 좋은 순서로 골랐어요', feat)}
     ${td.events.length ? `<section class="sec">
       <div class="sec-head"><div><h2>오늘 열리는 행사</h2><p class="sec-sub">오늘 갈 수 있는 곳이에요</p></div><button class="more" data-go="today">더보기${I('chevR')}</button></div>
       <div class="list">${td.events.slice(0, 4).map(rowHtml).join('')}</div></section>` : ''}
     ${section('무료로 즐기는 행사', fr, 'free', '2주 안에 열리는 무료 행사')}
-    ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', '비 오는 날에도 좋아요')}
+    ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', rainSoon([TODAY, w0, w1]) ? '비 소식이 있는 날엔 실내가 좋아요' : '날씨와 상관없이 신나게 놀 수 있어요')}
     ${!wk.events.length && !td.events.length && !fr.events.length && !kc.events.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
     <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
 }
