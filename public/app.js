@@ -482,7 +482,7 @@ function openDetail(id, push = true) {
   detail.innerHTML = `<div class="screen">
     <div class="d-scroll">
       <div class="d-media">${media}
-        <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button><button data-share="${esc(id)}" aria-label="공유">${I('share')}</button></div>
+        <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button></div>
       </div>
       <div class="d-body">
         <div class="badges">${badgesHtml(e)}</div>
@@ -505,6 +505,7 @@ function openDetail(id, push = true) {
     </div>
     <div class="d-bar">
       <button class="sq ${S.saved.has(id) ? 'on' : ''}" data-dheart="${esc(id)}" aria-label="저장">${I('heart')}</button>
+      <button class="sq" data-share="${esc(id)}" aria-label="공유">${I('share')}</button>
       ${e.link ? `<a class="cta" target="_blank" rel="noopener" href="${esc(e.link)}">${e.source === 'yeogijeogi' ? '예약하러 가기' : e.source === 'yeyak' ? (e.status === '접수중' ? '예약하러 가기' : '예약 페이지 보기') : '상세 정보 보기'}</a>`
         : map ? `<a class="cta ghost" target="_blank" rel="noopener" href="${map}">지도에서 보기</a>` : `<span class="cta ghost">상세 링크가 없어요</span>`}
     </div></div>`;
@@ -520,7 +521,7 @@ function openPlace(id, push = true) {
   detail.innerHTML = `<div class="screen">
     <div class="d-scroll">
       <div class="d-media">${p.image ? `<div class="bg" style="background-image:url('${esc(p.image)}')"></div><img class="main" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">` : `<img class="cover" src="${placeImg(p)}" alt="">`}
-        <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button><button data-share-place="${esc(id)}" aria-label="공유">${I('share')}</button></div>
+        <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button></div>
       </div>
       <div class="d-body">
         <div class="badges">${placeBadges(p)}</div>
@@ -544,6 +545,7 @@ function openPlace(id, push = true) {
     </div>
     <div class="d-bar">
       <button class="sq ${S.saved.has(id) ? 'on' : ''}" data-dheart="${esc(id)}" aria-label="저장">${I('heart')}</button>
+      <button class="sq" data-share-place="${esc(id)}" aria-label="공유">${I('share')}</button>
       ${p.url ? `<a class="cta" target="_blank" rel="noopener" href="${esc(p.url)}">홈페이지 보기</a>` : `<a class="cta" target="_blank" rel="noopener" href="${map}">지도에서 보기</a>`}
     </div></div>`;
   detail.hidden = false;
