@@ -16,13 +16,15 @@ import { GU, CATS } from './gu.js';
 import * as seoulEvents from './sources/seoul-events.js';
 import * as yeyak from './sources/yeyak.js';
 import * as yeogijeogi from './sources/yeogijeogi.js';
+import * as cultureFestival from './sources/culture-festival.js';
+import * as tourFestival from './sources/tourapi-festival.js';
 import * as seoulSpace from './places/seoul-space.js';
 import * as tourapi from './places/tourapi.js';
 
 loadEnv();
 
 const KEY = process.env.SEOUL_API_KEY || 'sample';
-const SOURCES = [seoulEvents, yeyak, yeogijeogi]; // optional 소스는 실패해도 나머지를 계속 진행(경고만)
+const SOURCES = [seoulEvents, yeyak, yeogijeogi, cultureFestival, tourFestival]; // 앞에 둔 소스를 우선(중복 제거 기준). optional 소스는 실패해도 나머지를 계속 진행(경고만)
 const PLACE_SOURCES = [seoulSpace, tourapi]; // 장소 소스(앞에 둔 소스의 값을 우선): 서울시 문화공간, 한국관광공사 TourAPI(서울·경기, TOURAPI_KEY 필요)
 const OUT = path.join(ROOT, 'public', 'data');
 const pad = n => String(n).padStart(2, '0');
@@ -39,6 +41,13 @@ async function main() {
   console.log(`[ingest] 수집 시작 (key=${KEY === 'sample' ? 'sample — 소량 테스트' : '사용자 키'}, 기준일 ${today})`);
   const events = [], descs = {}, seen = new Set(), counts = {}, warnings = [];
   let unknownGu = 0;
+  const evIndex = {}; // 구 → 이미 담은 행사(중복 합치기용)
+  const normTitle = t => t.replace(/[\s\[\]()「」<>·\-_:：,.!?'"‘’“”~]|제?\d+회|\d+주년|20\d\d/g, '');
+  const findDup = e => {
+    const n = normTitle(e.title);
+    return (evIndex[e.gu] ?? []).find(o => o.ev.source !== e.source && o.ev.start_date <= e.end_date && e.start_date <= o.ev.end_date
+      && (o.n === n || (Math.min(o.n.length, n.length) >= 5 && (o.n.includes(n) || n.includes(o.n)))));
+  };
   for (const src of SOURCES) {
     let rows;
     try {
@@ -52,15 +61,23 @@ async function main() {
       continue;
     }
     process.stdout.write('\n');
-    let n = 0;
+    let n = 0, merged = 0;
     for (const { event, desc } of rows) {
       if (seen.has(event.id)) continue; // 같은 행사가 두 번 내려오는 경우
       if (!GU.includes(event.gu)) { unknownGu++; continue; } // 25개 구가 아닌 값은 제외
+      // 다른 소스에 같은 행사가 이미 있으면(같은 구, 기간이 겹치고, 제목이 같거나 한쪽이 다른 쪽을 포함) 합치고 빈 항목만 채운다
+      const dup = findDup(event);
+      if (dup) {
+        for (const [k, v] of Object.entries(event)) if ((dup.ev[k] === '' || dup.ev[k] == null) && v !== '' && v != null) dup.ev[k] = v;
+        if (desc && !descs[dup.ev.id]) descs[dup.ev.id] = desc;
+        merged++; continue;
+      }
       seen.add(event.id); events.push(event); n++;
+      (evIndex[event.gu] ??= []).push({ n: normTitle(event.title), ev: event });
       if (desc) descs[event.id] = desc;
     }
     counts[src.name] = n;
-    console.log(`[ingest] ${src.label}: ${n}건`);
+    console.log(`[ingest] ${src.label}: ${n}건${merged ? ` (다른 소스와 겹쳐 ${merged}건 합침)` : ''}`);
   }
   if (unknownGu) console.log(`[ingest] 구 정보가 25개 구가 아닌 ${unknownGu}건은 제외했습니다.`);
 

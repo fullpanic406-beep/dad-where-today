@@ -301,7 +301,7 @@ async function renderHome() {
       <div class="rail">${pl.places.map(placeCard).join('')}</div></section>` : ''}
     ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', rainSoon([TODAY, w0, w1]) ? '비 소식이 있는 날엔 실내가 좋아요' : '날씨와 상관없이 신나게 놀 수 있어요')}
     ${!wk.events.length && !td.events.length && !fr.events.length && !kc.events.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
-    <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
+    <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털, 전국문화축제표준데이터, 한국관광공사<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
   setupCarousel();
 }
 
@@ -452,7 +452,7 @@ function openDetail(id, push = true) {
           ${e.target && (e.target.length > 9 || /\(/.test(e.target)) ? `<div>${I('users')}<p><b>대상 안내</b><span>${esc(e.target)}</span></p></div>` : ''}
         </div>
         <p class="d-desc" id="dDesc" hidden></p>
-        <p class="d-note">${e.source === 'yeyak' ? '서울시 공공서비스예약 정보(공공누리 1유형) 기준이에요.' : e.source === 'yeogijeogi' ? '서울시 우리동네 키움포털 정보 기준이에요.' : '서울 열린데이터광장(서울시 문화행사 정보) 기준이에요.'} 일정·요금·접수 상태는 바뀔 수 있으니 방문 전에 상세 페이지에서 확인해 주세요.</p>
+        <p class="d-note">${{ yeyak: '서울시 공공서비스예약 정보(공공누리 1유형) 기준이에요.', yeogijeogi: '서울시 우리동네 키움포털 정보 기준이에요.', 'culture-festival': '전국문화축제표준데이터(공공데이터포털, 지자체 등록) 기준이에요.', 'tourapi-festival': '한국관광공사 TourAPI 정보 기준이에요.' }[e.source] ?? '서울 열린데이터광장(서울시 문화행사 정보) 기준이에요.'}${e.image_license ? ` 사진은 한국관광공사 제공(공공누리 제${e.image_license.slice(-1)}유형).` : ''} 일정·요금·접수 상태는 바뀔 수 있으니 방문 전에 상세 페이지에서 확인해 주세요.</p>
       </div>
     </div>
     <div class="d-bar">
