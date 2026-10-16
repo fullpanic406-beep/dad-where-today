@@ -336,3 +336,6 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .pick-text p { margin-top: 3px; font-size: 12.5px; }
 .pick-text .badges { margin-top: 7px; }
 .pick-img { width: 100px; max-height: 142px; }
+
+/* 탭 전환 시 떠나는 화면 */
+.view-ghost { position: absolute; overflow: hidden; background: var(--bg); pointer-events: none; z-index: 2; }

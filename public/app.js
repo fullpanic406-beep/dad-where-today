@@ -618,7 +618,7 @@ async function share(id) {
 }
 
 /* ---------- 헤더·탭·렌더 ---------- */
-const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '구 지도'], ['saved', 'heart', '저장']];
+const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '지도'], ['saved', 'heart', '저장']];
 function renderChrome() {
   $('#regionBtn').innerHTML = `${I('pin')}${esc(S.gu)}`;
   $('#searchBtn').innerHTML = I('search');
@@ -642,7 +642,20 @@ async function render(keepScroll = true) {
   }
   view.scrollTop = y;
 }
-const setTab = t => { S.tab = t; render(false); };
+// 탭을 바꾸면 화면이 옆으로 밀리며 넘어간다(오른쪽 탭이면 왼쪽으로, 왼쪽 탭이면 오른쪽으로)
+function setTab(t) {
+  const from = TABS.findIndex(x => x[0] === S.tab), to = TABS.findIndex(x => x[0] === t);
+  if (t === S.tab || from < 0 || to < 0 || matchMedia('(prefers-reduced-motion: reduce)').matches) { S.tab = t; return render(false); }
+  const dir = to > from ? 1 : -1, app = $('#app'), r = view.getBoundingClientRect(), ar = app.getBoundingClientRect();
+  const ghost = document.createElement('div');   // 떠나는 화면의 복사본
+  ghost.className = 'view-ghost'; ghost.innerHTML = view.innerHTML;
+  Object.assign(ghost.style, { top: r.top - ar.top + 'px', left: r.left - ar.left + 'px', width: r.width + 'px', height: r.height + 'px' });
+  ghost.scrollTop = view.scrollTop; app.appendChild(ghost); ghost.scrollTop = view.scrollTop;
+  const opt = { duration: 280, easing: 'cubic-bezier(.22,.8,.3,1)' };
+  ghost.animate([{ transform: 'none' }, { transform: `translateX(${-100 * dir}%)` }], opt).finished.then(() => ghost.remove(), () => ghost.remove());
+  S.tab = t; render(false);
+  view.animate([{ transform: `translateX(${100 * dir}%)` }, { transform: 'none' }], opt);
+}
 function go(kind) {
   S.family = false; S.free = false; S.cat = '';
   if (kind === 'today') setRange(TODAY, TODAY);
