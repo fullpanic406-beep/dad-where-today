@@ -169,8 +169,7 @@ function pickSlide(e) {
     <div class="pick-text">
       <span class="eyebrow">아빠 PICK</span><span class="locchip">${esc(e.gu)}${e.dong ? ' ' + esc(e.dong) : ''}</span>
       <h2>${esc(e.title)}</h2>
-      <p>${whenText(e)}</p>
-      <p>${esc(where(e))}</p>
+      <p>${whenText(e)}${e.place ? ' · ' + esc(e.place) : ''}</p>
       <div class="badges">${rowBadges(e)}</div>
     </div>
     <div class="pick-img"><img src="img/i-${catImg(e)}.jpg" alt=""><img class="ev" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onload="this.classList.toggle('fit', this.naturalWidth / this.naturalHeight > 1.2)" onerror="this.remove()"></div>
@@ -187,7 +186,6 @@ function pickPlaceSlide(p) {
       <span class="eyebrow">아빠 PICK</span><span class="locchip">${p.region === '서울' ? '' : '경기 '}${esc(p.gu)}${p.dong ? ' ' + esc(p.dong) : ''}</span>
       <h2>${esc(p.name)}</h2>
       <p>${esc(p.hours || p.fee || KIND[p.kind] || '')}</p>
-      <p>${esc(p.addr)}</p>
       <div class="badges">${placeBadges(p)}</div>
     </div>
     <div class="pick-img"><img src="${placeImg(p)}" alt="">${p.image ? `<img class="ev" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.classList.toggle('fit', this.naturalWidth / this.naturalHeight > 1.2)" onerror="this.remove()">` : ''}</div>
@@ -203,7 +201,9 @@ function setupCarousel() {
   const n = track.children.length, dots = [...document.querySelectorAll('#carDots i')];
   const cur = () => Math.round(track.scrollLeft / track.clientWidth);
   track.addEventListener('scroll', () => dots.forEach((d, i) => d.classList.toggle('on', i === cur())), { passive: true });
-  let paused = false, resume;
+  let paused = false, resume, hover = false;
+  track.addEventListener('mouseenter', () => { hover = true; });
+  track.addEventListener('mouseleave', () => { hover = false; });
   const hold = () => { paused = true; clearTimeout(resume); resume = setTimeout(() => (paused = false), 7000); }; // 손대면 잠시 멈춤
   carHold = hold;
   ['pointerdown', 'touchstart', 'wheel'].forEach(ev => track.addEventListener(ev, hold, { passive: true }));
@@ -211,7 +211,7 @@ function setupCarousel() {
   // 시작 화면이 사라진 뒤부터 시간을 세므로, 처음 보이는 건 항상 첫 슬라이드(히어로)다
   let last = Date.now();
   carTimer = setInterval(() => {
-    if (document.querySelector('#splash') || paused || document.hidden || S.tab !== 'home' || !detail.hidden || !searchEl.hidden) { last = Date.now(); return; }
+    if (document.querySelector('#splash') || paused || hover || document.hidden || S.tab !== 'home' || !detail.hidden || !searchEl.hidden) { last = Date.now(); return; }
     if (Date.now() - last < 4200) return;
     last = Date.now();
     track.scrollTo({ left: ((cur() + 1) % n) * track.clientWidth, behavior: 'smooth' });
@@ -338,7 +338,7 @@ async function renderHome() {
         </div>
         ${pinned.map(pickPlaceSlide).join('')}${picks.map(pickSlide).join('')}
       </div>
-      ${picks.length + pinned.length ? `<div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>` : ''}
+      ${picks.length + pinned.length ? `<div class="car-ctl"><button class="car-btn" data-car="-1" aria-label="이전 배너">${I('back')}</button><div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div><button class="car-btn" data-car="1" aria-label="다음 배너">${I('chevR')}</button></div>` : ''}
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${section('이번 주말 가볼 만한 곳', { events: [...wk.events].sort((a, b) => byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}구·동 순서로 모았어요`, 20)}
@@ -664,6 +664,13 @@ document.addEventListener('click', e => {
   const sh = t.closest('[data-share]'); if (sh) return share(sh.dataset.share);
   const shp = t.closest('[data-share-place]'); if (shp) return sharePlace(shp.dataset.sharePlace);
   if (t.closest('[data-close]')) return closeScreen();
+  const cb = t.closest('[data-car]');
+  if (cb) {
+    carHold?.();
+    const tr = $('#carTrack'), n = tr.children.length, i = Math.round(tr.scrollLeft / tr.clientWidth);
+    tr.scrollTo({ left: ((i + Number(cb.dataset.car) + n) % n) * tr.clientWidth, behavior: 'smooth' });
+    return;
+  }
   const dot = t.closest('[data-slide]');
   if (dot) { carHold?.(); const tr = $('#carTrack'); tr.scrollTo({ left: Number(dot.dataset.slide) * tr.clientWidth, behavior: 'smooth' }); return; }
   const pl = t.closest('[data-place]'); if (pl) return openPlace(pl.dataset.place);

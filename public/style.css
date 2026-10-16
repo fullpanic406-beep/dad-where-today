@@ -313,3 +313,26 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
 
 .pick-text .locchip { margin-left: 6px; font-size: 12.5px; font-weight: 800; opacity: .95; vertical-align: middle; }
+
+/* 배너 이전·다음 버튼 */
+.car-ctl { position: absolute; right: 10px; bottom: 8px; z-index: 3; display: flex; align-items: center; padding: 2px 3px; border-radius: 18px; background: rgba(0, 0, 0, .28); }
+.car-ctl .car-dots { position: static; right: auto; bottom: auto; background: none; padding: 0 5px; border-radius: 0; }
+.car-btn { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+.car-btn svg.i { width: 18px; height: 18px; stroke-width: 2.2; }
+.car-btn:active { background: rgba(255, 255, 255, .25); }
+
+/* ---- 배너 높이 2/3 (16:10 → 12:5, 폭 480 기준 300px → 200px) ---- */
+.car-track { aspect-ratio: 12 / 5; }
+.sk-hero { aspect-ratio: 12 / 5; }
+.car-slide.hero img.hero-img { object-position: 50% 24%; }
+.hero-text { bottom: 14px; }
+.hero-text .eyebrow { margin-bottom: 6px; }
+.hero-text h2 { font-size: 21px; }
+.hero-text p { margin-top: 2px; font-size: 13px; }
+.wx { top: 10px; right: 10px; }
+.pick { gap: 12px; padding: 14px 14px 44px 18px; }
+.pick-text .eyebrow { height: 22px; margin-bottom: 6px; }
+.pick-text h2 { font-size: 18px; -webkit-line-clamp: 2; }
+.pick-text p { margin-top: 3px; font-size: 12.5px; }
+.pick-text .badges { margin-top: 7px; }
+.pick-img { width: 100px; max-height: 142px; }
