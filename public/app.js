@@ -267,10 +267,9 @@ function updatedLabel() {
 async function renderHome() {
   const [w0, w1] = weekendOf(TODAY);
   const near = nearPoint();
-  const [wk, td, fr, kc, fest, soon, pl] = await Promise.all([
+  const [wk, td, kc, fest, soon, pl] = await Promise.all([
     api('/api/events', { gu: S.gu, from: w0, to: w1 }),
     api('/api/events', { gu: S.gu, from: TODAY, to: TODAY }),
-    api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), free: 1 }),
     api('/api/events', { gu: S.gu, from: TODAY, to: w1, cat: 'kidscafe' }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), cat: 'festival' }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13) }),
@@ -317,15 +316,11 @@ async function renderHome() {
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${section('이번 주말 가볼 만한 곳', wk, 'weekend', weekendWx(w0, w1) || '아이와 가기 좋은 순서로 골랐어요')}
-    ${td.events.length ? `<section class="sec">
-      <div class="sec-head"><div><h2>오늘 열리는 행사</h2><p class="sec-sub">오늘 갈 수 있는 곳이에요</p></div><button class="more" data-go="today">더보기${I('chevR')}</button></div>
-      <div class="list">${td.events.slice(0, 4).map(rowHtml).join('')}</div></section>` : ''}
-    ${section('무료로 즐기는 행사', fr, 'free', '2주 안에 열리는 무료 행사')}
     ${pl.places.length ? `<section class="sec">
-      <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 순 · 어린이박물관, 과학관, 체험관, 안전체험관 (경기도 포함)</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
+      <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 순 · 서울·경기</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
       <div class="rail">${pl.places.map(placeCard).join('')}</div></section>` : ''}
     ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', rainSoon([TODAY, w0, w1]) ? '비 소식이 있는 날엔 실내가 좋아요' : '날씨와 상관없이 신나게 놀 수 있어요')}
-    ${!wk.events.length && !td.events.length && !fr.events.length && !kc.events.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
+    ${!wk.events.length && !kc.events.length && !pl.places.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
     <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털, 전국문화축제표준데이터, 한국관광공사<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
   setupCarousel();
 }
