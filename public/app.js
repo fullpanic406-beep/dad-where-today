@@ -167,7 +167,7 @@ function pickSlide(e) {
   return `<button class="car-slide pick" data-id="${esc(e.id)}">
     <div class="pick-bg ${e.image ? '' : 'none'}"${e.image ? ` style="background-image:url('${esc(e.image)}')"` : ''}></div>
     <div class="pick-text">
-      <span class="eyebrow">아빠 PICK</span>
+      <span class="eyebrow">아빠 PICK</span><span class="locchip">${esc(e.gu)}${e.dong ? ' ' + esc(e.dong) : ''}</span>
       <h2>${esc(e.title)}</h2>
       <p>${whenText(e)}</p>
       <p>${esc(where(e))}</p>
@@ -206,7 +206,7 @@ function pcardHtml(e) {
   return `<button class="pcard" data-id="${esc(e.id)}">
     <div class="ph">${thumb(e)}<div class="tags">${e.is_free === 1 ? '<span class="tag free">무료</span>' : ''}${e.family ? '<span class="tag kid">아이와</span>' : ''}</div></div>
     <h3>${esc(e.title)}</h3>
-    <div class="m">${whenText(e)}</div>
+    <div class="m">${e.dong ? esc(e.dong) + ' · ' : ''}${whenText(e)}</div>
   </button>`;
 }
 const placeImg = p => `img/i-${KIND_IMG[p.kind] ?? 'weekend'}.jpg`;
@@ -228,11 +228,16 @@ function placeCard(p) {
   return `<button class="pcard" data-place="${esc(p.id)}">
     <div class="ph">${placeThumb(p)}<div class="tags"><span class="tag">${KIND[p.kind] ?? '장소'}</span>${p.free === 1 ? '<span class="tag free">무료</span>' : ''}</div></div>
     <h3>${esc(p.name)}</h3>
-    <div class="m">${esc(p.gu)}${p.dist != null ? ' · ' + distText(p) : ''}</div>
+    <div class="m">${esc(p.gu)}${p.dong ? ' ' + esc(p.dong) : ''}${p.dist != null ? ' · ' + distText(p) : ''}</div>
   </button>`;
 }
 // ---- 구·동 단위로 묶어 보여 주기 ----
 const koSort = (a, b) => a.localeCompare(b, 'ko');
+// 추천 목록 순서: 내 구 → 서울의 다른 구 → 경기, 같은 구 안에서는 동 가나다 순(동 정보가 없으면 맨 뒤)
+const mineFirst = x => (x.gu === S.gu && (x.region ?? '서울') === '서울' ? 0 : 1);
+const RG_ORDER = { 서울: 0, 경기: 1 };
+const byArea = (a, b) => mineFirst(a) - mineFirst(b) || (RG_ORDER[a.region ?? '서울'] ?? 9) - (RG_ORDER[b.region ?? '서울'] ?? 9)
+  || koSort(a.gu, b.gu) || ((a.dong || '') === '') - ((b.dong || '') === '') || koSort(a.dong || '', b.dong || '');
 const groupBy = (list, keyFn) => { const m = new Map(); for (const x of list) { const k = keyFn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); } return m; };
 const groupBox = (title, count, rows) => `<div class="gbox"><div class="grp"><b>${title}</b><span>${count}</span></div><div class="list">${rows}</div></div>`;
 // 선택한 구의 행사를 동별로. 한 묶음 안에서는 이 기간에 시작하는 행사를 날짜순으로, 이미 진행 중이던 장기 행사는 뒤에 둔다
@@ -273,14 +278,15 @@ async function renderHome() {
     api('/api/events', { gu: S.gu, from: TODAY, to: w1, cat: 'kidscafe' }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), cat: 'festival' }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13) }),
-    api('/api/places', { near, limit: 10 }).catch(() => ({ places: [], total: 0 })),
+    api('/api/places', { near, limit: 12 }).catch(() => ({ places: [], total: 0 })),
   ]);
+  pl.places.sort((a, b) => byArea(a, b) || (a.dist ?? 1e9) - (b.dist ?? 1e9));
   const sc = [['today', 'sun', '오늘'], ['weekend', 'sparkle', '이번 주말'], ['free', 'gift', '무료'], ['kids', 'smile', '아이와'], ['festival', 'flag', '축제']];
 
-  const section = (title, list, more, sub = '') => list.events.length ? `
+  const section = (title, list, more, sub = '', cap = 10) => list.events.length ? `
     <section class="sec">
       <div class="sec-head"><div><h2>${title}</h2>${sub ? `<p class="sec-sub">${sub}</p>` : ''}</div><button class="more" data-go="${more}">더보기${I('chevR')}</button></div>
-      <div class="rail">${list.events.slice(0, 10).map(pcardHtml).join('')}</div>
+      <div class="rail">${list.events.slice(0, cap).map(pcardHtml).join('')}</div>
     </section>` : '';
 
   // 아빠 PICK 선정 — ① 축제 우선 ② 가까운 일정 우선(이번 주말 단기 행사 → 2주 안에 시작 → 오래 진행 중) ③ 아이와 가기 좋은 순, 날짜 빠른 순
@@ -296,7 +302,8 @@ async function renderHome() {
       || b.family - a.family
       || (nearGroup(a) === 2 ? a.end_date.localeCompare(b.end_date) : a.start_date.localeCompare(b.start_date))
       || spanDays(a) - spanDays(b))
-    .slice(0, 5);
+    .slice(0, 5)
+    .sort(byArea); // 고르는 기준은 그대로(축제 → 가까운 일정), 넘어가는 순서만 구 → 동
 
   view.innerHTML = `
     <section class="hero-car">
@@ -315,9 +322,9 @@ async function renderHome() {
       ${picks.length ? `<div class="car-dots" id="carDots">${['', ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>` : ''}
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
-    ${section('이번 주말 가볼 만한 곳', wk, 'weekend', weekendWx(w0, w1) || '아이와 가기 좋은 순서로 골랐어요')}
+    ${section('이번 주말 가볼 만한 곳', { events: [...wk.events].sort((a, b) => byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}구·동 순서로 모았어요`, 20)}
     ${pl.places.length ? `<section class="sec">
-      <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 순 · 서울·경기</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
+      <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 12곳 · 구·동 순서</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
       <div class="rail">${pl.places.map(placeCard).join('')}</div></section>` : ''}
     ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', rainSoon([TODAY, w0, w1]) ? '비 소식이 있는 날엔 실내가 좋아요' : '날씨와 상관없이 신나게 놀 수 있어요')}
     ${!wk.events.length && !kc.events.length && !pl.places.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
