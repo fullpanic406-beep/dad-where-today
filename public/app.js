@@ -687,7 +687,10 @@ document.addEventListener('click', e => {
   const cat = t.closest('[data-cat]'); if (cat) { S.cat = cat.dataset.cat; return render(); }
 
   const gu = t.closest('[data-gu]');
-  if (gu) { S.gu = gu.dataset.gu; store.set('gu', S.gu); toast(`${S.gu}로 바꿨어요`); return render(); }
+  if (gu) { // 지도에서 지역을 고르면 가까운 순 기준도 그 지역으로 바뀐다(이전에 '내 위치로'를 눌렀어도 해제)
+    const wasGps = !!S.near; S.gu = gu.dataset.gu; S.near = null; store.set('gu', S.gu);
+    toast(wasGps ? `${S.gu} 기준으로 바꿨어요(내 위치 기준 해제)` : `${S.gu}로 바꿨어요`); return render();
+  }
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && (!detail.hidden || !searchEl.hidden)) closeScreen();
