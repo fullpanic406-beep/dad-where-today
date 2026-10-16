@@ -444,8 +444,7 @@ async function renderPlaces() {
   const regions = [...new Set(all.places.map(p => p.region))];
   view.innerHTML = `
     <section class="sec">
-      <div class="sec-head"><div><h2>가볼 만한 곳</h2><p class="sec-sub">${S.placeSort === 'near' ? `${esc(near?.label ?? '')}에서 가까운 순` : `${esc(S.gu)}를 맨 위에, 구·동별로 모았어요`} · 문 여는 시간과 휴관일을 확인하세요</p></div>
-        <button class="geo ${S.near ? 'on' : ''}" data-geo>${I('pin')}${S.near ? '내 위치' : '내 위치로'}</button></div>
+      <div class="sec-head"><div><h2>가볼 만한 곳</h2><p class="sec-sub">${S.placeSort === 'near' ? `${esc(near?.label ?? '')}에서 가까운 순` : `${esc(S.gu)}를 맨 위에, 구·동별로 모았어요`} · 문 여는 시간과 휴관일을 확인하세요</p></div></div>
       ${regions.length > 1 ? `<div class="chips" style="margin-bottom:8px"><button class="chip ${!S.placeRegion ? 'on' : ''}" data-pregion="">전체 지역</button>${regions.map(r => `<button class="chip ${S.placeRegion === r ? 'on' : ''}" data-pregion="${esc(r)}">${esc(r)}</button>`).join('')}</div>` : ''}
       <div class="chips"><button class="chip ${!S.placeKind ? 'on' : ''}" data-pkind="">전체</button>${kinds.map(k => `<button class="chip ${S.placeKind === k ? 'on' : ''}" data-pkind="${k}">${KIND[k]}</button>`).join('')}</div>
       <div class="seg"><button class="${S.placeSort === 'area' ? 'on' : ''}" data-psort="area">지역별</button><button class="${S.placeSort === 'near' ? 'on' : ''}" data-psort="near">가까운 순</button></div>
@@ -639,16 +638,6 @@ async function sharePlace(id) {
     else { await navigator.clipboard.writeText(`${text}\n${url}`); toast('복사했어요'); }
   } catch { /* 공유 취소 */ }
 }
-// 내 위치로 가까운 순 정렬 (위치는 이 기기에서만 쓰고 저장·전송하지 않는다)
-function useMyLocation() {
-  if (S.near) { S.near = null; toast('선택한 지역 기준으로 돌아갔어요'); return render(); }
-  if (!navigator.geolocation) return toast('이 기기에서는 위치를 쓸 수 없어요');
-  toast('위치를 확인하는 중…');
-  navigator.geolocation.getCurrentPosition(
-    pos => { S.near = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: '내 위치' }; render(); },
-    () => toast('위치를 가져오지 못했어요. 권한을 확인해 주세요'),
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
-}
 function toggleSave(id) {
   S.saved.has(id) ? S.saved.delete(id) : S.saved.add(id);
   store.set('saved', [...S.saved]);
@@ -755,7 +744,6 @@ document.addEventListener('click', e => {
   const ps = t.closest('[data-psort]'); if (ps) { S.placeSort = ps.dataset.psort; return render(); }
   const pk = t.closest('[data-pkind]'); if (pk) { S.placeKind = pk.dataset.pkind; return render(); }
   const pr = t.closest('[data-pregion]'); if (pr) { S.placeRegion = pr.dataset.pregion; return render(); }
-  if (t.closest('[data-geo]')) return useMyLocation();
   const card = t.closest('[data-id]'); if (card) return openDetail(card.dataset.id);
 
   const kw = t.closest('[data-kw]');

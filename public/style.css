@@ -298,9 +298,6 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 
 /* ---- 가볼 곳 ---- */
 .badge.kind { background: #EEF3FF; color: #2F5BD0; }
-.geo { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px 0 9px; border-radius: 17px; background: #F2F4F6; font-size: 13px; font-weight: 700; color: var(--sub); }
-.geo svg.i { width: 16px; height: 16px; }
-.geo.on { background: var(--brand-soft); color: var(--brand-dark); }
 .tabs button span { white-space: nowrap; }
 
 /* ---- 구·동 단위 묶음 ---- */
