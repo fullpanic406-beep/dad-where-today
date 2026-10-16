@@ -356,3 +356,13 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .fest-meta p { margin: 0; font-size: 13.5px; color: #3B4552; }
 .fest-meta b { display: inline-block; min-width: 68px; color: var(--mute); font-weight: 600; font-size: 12.5px; }
 .fest-meta a { color: var(--brand-dark); font-weight: 800; text-decoration: none; }
+
+/* 구 지도: 부드러운 입체 지도 */
+.map-card { background: linear-gradient(180deg, #F3F8FC 0%, #EAF2F8 100%); }
+.map-card path { stroke: #fff; stroke-width: 1.8; stroke-linejoin: round; transition: fill .15s, transform .15s; }
+.map-card path:active { filter: brightness(.95); }
+.map-card path.sel { stroke: #E85A0C; stroke-width: 3.2; }
+.map-card text { font-size: 13px; font-weight: 800; fill: #3A2A1D; stroke: rgba(255, 255, 255, .75); stroke-width: 2.4px; text-anchor: middle; }
+.map-card text.lt { fill: #fff; stroke: rgba(150, 50, 0, .35); stroke-width: 2px; }
+.map-card text.sel { font-size: 14.5px; }
+.map-card text .cnt { font-size: 11px; font-weight: 700; }

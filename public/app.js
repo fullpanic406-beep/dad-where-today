@@ -424,8 +424,11 @@ async function renderMap() {
     <div class="map-sub"><b>${rangeLabel(S.from, S.to)}</b> 기준 구별 행사 수예요. 지역을 눌러 골라 보세요.</div>
     <div class="map-card">
       <svg viewBox="${viewBox}" role="img" aria-label="서울 구 지도">
-        ${districts.map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" class="${d.name === S.gu ? 'sel' : ''}"/>`).join('')}
-        ${districts.map(d => `<text x="${d.cx}" y="${d.cy + 5}">${d.name.replace(/구$/, '')}</text>`).join('')}
+        <defs><filter id="mapShadow" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#B4540F" flood-opacity=".22"/></filter>
+          <filter id="selGlow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#E85A0C" flood-opacity=".45"/></filter></defs>
+        <g filter="url(#mapShadow)">${districts.filter(d => d.name !== S.gu).map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" fill-rule="evenodd"/>`).join('')}</g>
+        ${districts.filter(d => d.name === S.gu).map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" fill-rule="evenodd" class="sel" filter="url(#selGlow)"/>`).join('')}
+        ${districts.map(d => { const c = sum[d.name]?.n ?? 0, dark = c / max > .6; return `<text class="${dark ? 'lt' : ''} ${d.name === S.gu ? 'sel' : ''}" x="${d.cx}" y="${d.cy - 1}">${d.name.replace(/구$/, '')}<tspan class="cnt" x="${d.cx}" dy="13">${c || ''}</tspan></text>`; }).join('')}
       </svg>
       <div class="legend">적음 ${SCALE.map(c => `<i style="background:${c}"></i>`).join('')} 많음 <span style="margin-left:auto">회색 = 없음</span></div>
     </div>
