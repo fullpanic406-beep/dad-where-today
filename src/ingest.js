@@ -16,11 +16,14 @@ import { GU, CATS } from './gu.js';
 import * as seoulEvents from './sources/seoul-events.js';
 import * as yeyak from './sources/yeyak.js';
 import * as yeogijeogi from './sources/yeogijeogi.js';
+import * as seoulSpace from './places/seoul-space.js';
+import * as tourapi from './places/tourapi.js';
 
 loadEnv();
 
 const KEY = process.env.SEOUL_API_KEY || 'sample';
 const SOURCES = [seoulEvents, yeyak, yeogijeogi]; // optional 소스는 실패해도 나머지를 계속 진행(경고만)
+const PLACE_SOURCES = [seoulSpace, tourapi]; // 장소 소스(앞에 둔 소스의 값을 우선): 서울시 문화공간, 한국관광공사 TourAPI(서울·경기, TOURAPI_KEY 필요)
 const OUT = path.join(ROOT, 'public', 'data');
 const pad = n => String(n).padStart(2, '0');
 const today = (() => { // 한국 시간 기준 오늘 (CI 서버는 UTC)
@@ -88,6 +91,41 @@ async function main() {
     write(path.join(OUT, 'gu', `${g}.json`), list);
     write(path.join(OUT, 'desc', `${g}.json`), Object.fromEntries(list.filter(e => descs[e.id]).map(e => [e.id, descs[e.id]])));
   }
+
+  // 가볼 만한 곳(상시 운영하는 어린이박물관·과학관·체험관 등): 소스가 실패해도 행사 배포는 계속된다
+  // 같은 시설이 여러 소스에 있으면(이름이 같거나 주소·종류가 같음) 하나로 합치고, 빈 항목은 다른 소스 값으로 채운다
+  const placesFile = path.join(OUT, 'places.json');
+  const prevPlaces = existsSync(placesFile) ? (JSON.parse(readFileSync(placesFile, 'utf8')).places ?? []) : [];
+  const places = [], byName = new Map(), byAddr = new Map(), placeCounts = {};
+  const nameKey = p => p.name.replace(/[\s()·\-_,.]/g, '');
+  const addrKey = p => (p.addr.replace(/\([^)]*\)/g, '').replace(/\s+/g, '') + '|' + p.kind);
+  for (const src of PLACE_SOURCES) {
+    try {
+      const rows = await src.fetchPlaces(KEY, log);
+      process.stdout.write('\n');
+      let n = 0;
+      for (const p of rows) {
+        const dup = byName.get(nameKey(p)) ?? (p.addr.length > 8 ? byAddr.get(addrKey(p)) : null);
+        if (dup) { for (const [k, v] of Object.entries(p)) if ((dup[k] === '' || dup[k] == null) && v !== '' && v != null) dup[k] = v; continue; }
+        places.push(p); byName.set(nameKey(p), p); if (p.addr.length > 8) byAddr.set(addrKey(p), p); n++;
+      }
+      placeCounts[src.name] = n;
+      console.log(`[ingest] ${src.label}: ${n}곳`);
+    } catch (e) {
+      process.stdout.write('\n');
+      // 실패한 날에는 이전에 배포된 이 소스의 장소를 그대로 이어 써서 사이트에서 갑자기 사라지지 않게 한다
+      const keep = prevPlaces.filter(p => p.source === src.name);
+      for (const p of keep) {
+        if (byName.has(nameKey(p))) continue;
+        places.push(p); byName.set(nameKey(p), p); if (p.addr.length > 8) byAddr.set(addrKey(p), p);
+      }
+      warnings.push(`${src.label}: ${e.message}${keep.length ? ` (이전 데이터 ${keep.length}곳 유지)` : ''}`);
+      console.log(`[ingest] 경고 — ${src.label} 건너뜀: ${e.message}${keep.length ? ` (이전 데이터 ${keep.length}곳 유지)` : ''}`);
+      placeCounts[src.name] = keep.length;
+    }
+  }
+  places.sort((a, b) => a.region.localeCompare(b.region, 'ko') || a.gu.localeCompare(b.gu, 'ko') || a.name.localeCompare(b.name, 'ko'));
+  write(path.join(OUT, 'places.json'), { meta: { generatedAt: new Date().toISOString(), total: places.length, counts: placeCounts }, places });
 
   // 지도·건수용 요약: [구 번호, 시작, 종료, 아이와, 무료, 카테고리 번호, 접수중 여부, 운영 요일 비트마스크(127=매일)]
   const rows = events.map(e => [GU.indexOf(e.gu), e.start_date, e.end_date, e.family, e.is_free ?? -1, Math.max(0, CATS.indexOf(e.category)), e.status === '접수중' ? 1 : 0, e.dow ?? 127]);

@@ -1,9 +1,11 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc } from './data.js';
+import { km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces } from './data.js';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
 
+const KIND = { kidsmuseum: '어린이박물관', science: '과학관', experience: '체험관', safety: '안전체험관', nature: '자연·생태', museum: '박물관·전시' };
+const KIND_IMG = { kidsmuseum: 'kidscafe', science: 'edu', experience: 'edu', safety: 'today', nature: 'weekend', museum: 'exhibit' }; // 사진이 없을 때 쓰는 3D 아이콘
 const CAT = { festival: '축제', show: '공연', exhibit: '전시', edu: '체험·교육', kidscafe: '키즈카페', etc: '기타' };
 const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -26,6 +28,7 @@ const P = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
   sparkle: '<path d="M11 3l1.9 5.6L18.5 10.5l-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
   gift: '<rect x="4" y="9.5" width="16" height="10.5" rx="2"/><path d="M12 9.5V20M3.5 9.5h17V7h-17zM12 7c-1.5-3.2-5-2.6-4.2-.8M12 7c1.5-3.2 5-2.6 4.2-.8"/>',
+  compass: '<circle cx="12" cy="12" r="8.5"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/>',
   smile: '<circle cx="12" cy="12" r="8.5"/><path d="M8.3 14c1.2 2.2 6.2 2.2 7.4 0"/><path d="M9 9.8h.01M15 9.8h.01" stroke-width="2.4"/>',
   flag: '<path d="M5.5 21V4M5.5 5h12l-2.2 4 2.2 4h-12"/>',
   cloud: `<path d="${CLOUD}"/>`,
@@ -57,6 +60,7 @@ const api = async (path, params = {}) => {
   if (path === '/api/events') return queryEvents(p);
   if (path === '/api/calendar') return queryCalendar(p);
   if (path === '/api/summary') return querySummary(p);
+  if (path === '/api/places') return queryPlaces(p);
   if (path === '/api/meta') return loadMeta();
   throw new Error(path);
 };
@@ -80,9 +84,13 @@ const S = {
   from: TODAY, to: TODAY, anchor: TODAY, weekOnly: false,
   family: false, free: false, cat: '',
   searchAll: false,
+  placeKind: '', placeRegion: '', near: null, // near: 가까운 순 기준점(내 위치를 쓰면 { lat, lng, label })
   saved: new Set(store.get('saved', [])),
   cache: new Map(), meta: null, mapData: null, weather: null,
 };
+// 가까운 순 기준점: 내 위치를 켜지 않았다면 선택한 구의 중심
+const nearPoint = () => S.near ?? (() => { const c = S.mapData?.districts.find(x => x.name === S.gu); return c ? { lat: c.lat, lng: c.lng, label: `${S.gu} 중심` } : null; })();
+const distText = p => (p.dist == null ? '' : p.dist < 1 ? `${Math.round(p.dist * 10) * 100}m` : `${p.dist.toFixed(p.dist < 10 ? 1 : 0)}km`);
 const filterParams = () => ({ family: S.family ? 1 : '', free: S.free ? 1 : '', cat: S.cat });
 const modeOf = () => {
   if (S.from === TODAY && S.to === TODAY) return 'today';
@@ -154,25 +162,73 @@ function rowHtml(e) {
       <div class="meta dim">${CAT[e.category] ?? '기타'} · ${esc(where(e))}</div>
     </div>${heartBtn(e)}</div>`;
 }
-function featHtml(e) {
+function pickSlide(e) {
   S.cache.set(e.id, e);
-  return `<button class="feat" data-id="${esc(e.id)}">
-    <div class="feat-img"><img src="img/i-${catImg(e)}.jpg" alt=""><img class="ev" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div>
-    <div class="feat-body">
-      <span class="eyebrow">이번 주말 PICK</span>
-      <h3>${esc(e.title)}</h3>
+  return `<button class="car-slide pick" data-id="${esc(e.id)}">
+    <div class="pick-bg ${e.image ? '' : 'none'}"${e.image ? ` style="background-image:url('${esc(e.image)}')"` : ''}></div>
+    <div class="pick-text">
+      <span class="eyebrow">아빠 PICK</span>
+      <h2>${esc(e.title)}</h2>
       <p>${whenText(e)}</p>
-      <p class="dim">${esc(where(e))}</p>
+      <p>${esc(where(e))}</p>
       <div class="badges">${rowBadges(e)}</div>
     </div>
+    <div class="pick-img"><img src="img/i-${catImg(e)}.jpg" alt=""><img class="ev" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onload="this.classList.toggle('fit', this.naturalWidth / this.naturalHeight > 1.2)" onerror="this.remove()"></div>
   </button>`;
 }
+
+// 상단 배너: 첫 슬라이드는 브랜드 히어로, 이어서 '아빠 PICK' 추천 행사가 자동으로 넘어간다
+let carTimer = null, carHold = null;
+function setupCarousel() {
+  clearInterval(carTimer);
+  const track = $('#carTrack');
+  if (!track || track.children.length < 2) return;
+  const n = track.children.length, dots = [...document.querySelectorAll('#carDots i')];
+  const cur = () => Math.round(track.scrollLeft / track.clientWidth);
+  track.addEventListener('scroll', () => dots.forEach((d, i) => d.classList.toggle('on', i === cur())), { passive: true });
+  let paused = false, resume;
+  const hold = () => { paused = true; clearTimeout(resume); resume = setTimeout(() => (paused = false), 7000); }; // 손대면 잠시 멈춤
+  carHold = hold;
+  ['pointerdown', 'touchstart', 'wheel'].forEach(ev => track.addEventListener(ev, hold, { passive: true }));
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // 시작 화면이 사라진 뒤부터 시간을 세므로, 처음 보이는 건 항상 첫 슬라이드(히어로)다
+  let last = Date.now();
+  carTimer = setInterval(() => {
+    if (document.querySelector('#splash') || paused || document.hidden || S.tab !== 'home' || !detail.hidden || !searchEl.hidden) { last = Date.now(); return; }
+    if (Date.now() - last < 4200) return;
+    last = Date.now();
+    track.scrollTo({ left: ((cur() + 1) % n) * track.clientWidth, behavior: 'smooth' });
+  }, 400);
+}
+
 function pcardHtml(e) {
   S.cache.set(e.id, e);
   return `<button class="pcard" data-id="${esc(e.id)}">
     <div class="ph">${thumb(e)}<div class="tags">${e.is_free === 1 ? '<span class="tag free">무료</span>' : ''}${e.family ? '<span class="tag kid">아이와</span>' : ''}</div></div>
     <h3>${esc(e.title)}</h3>
     <div class="m">${whenText(e)}</div>
+  </button>`;
+}
+const placeImg = p => `img/i-${KIND_IMG[p.kind] ?? 'weekend'}.jpg`;
+const placeThumb = p => `<img src="${placeImg(p)}" alt="">${p.image ? `<img class="ev" src="${esc(p.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}`;
+const placeBadges = p => `<span class="badge kind">${KIND[p.kind] ?? '장소'}</span>${p.free === 1 ? '<span class="badge free">무료</span>' : ''}`;
+function placeRow(p) {
+  S.cache.set(p.id, p);
+  return `<div class="row" data-place="${esc(p.id)}" role="button" tabindex="0">
+    <div class="ph">${placeThumb(p)}</div>
+    <div class="body">
+      <div class="badges">${placeBadges(p)}</div>
+      <h3>${esc(p.name)}</h3>
+      <div class="meta">${esc(p.region)} ${esc(p.gu)}${p.dist != null ? ' · ' + distText(p) : ''}</div>
+      <div class="meta dim">${esc(p.hours || p.fee || p.addr)}</div>
+    </div>${heartBtn(p)}</div>`;
+}
+function placeCard(p) {
+  S.cache.set(p.id, p);
+  return `<button class="pcard" data-place="${esc(p.id)}">
+    <div class="ph">${placeThumb(p)}<div class="tags"><span class="tag">${KIND[p.kind] ?? '장소'}</span>${p.free === 1 ? '<span class="tag free">무료</span>' : ''}</div></div>
+    <h3>${esc(p.name)}</h3>
+    <div class="m">${esc(p.gu)}${p.dist != null ? ' · ' + distText(p) : ''}</div>
   </button>`;
 }
 const emptyHtml = (title, msg) => `<div class="empty"><img src="img/empty.jpg" alt=""><b>${title}</b>${msg}</div>`;
@@ -185,42 +241,68 @@ function updatedLabel() {
 }
 async function renderHome() {
   const [w0, w1] = weekendOf(TODAY);
-  const [wk, td, fr, kc] = await Promise.all([
+  const near = nearPoint();
+  const [wk, td, fr, kc, fest, soon, pl] = await Promise.all([
     api('/api/events', { gu: S.gu, from: w0, to: w1 }),
     api('/api/events', { gu: S.gu, from: TODAY, to: TODAY }),
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), free: 1 }),
     api('/api/events', { gu: S.gu, from: TODAY, to: w1, cat: 'kidscafe' }),
+    api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13), cat: 'festival' }),
+    api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13) }),
+    api('/api/places', { near, limit: 10 }).catch(() => ({ places: [], total: 0 })),
   ]);
   const sc = [['today', 'sun', '오늘'], ['weekend', 'sparkle', '이번 주말'], ['free', 'gift', '무료'], ['kids', 'smile', '아이와'], ['festival', 'flag', '축제']];
 
-  const section = (title, list, more, sub = '', skip = null) => list.events.some(e => e !== skip) ? `
+  const section = (title, list, more, sub = '') => list.events.length ? `
     <section class="sec">
       <div class="sec-head"><div><h2>${title}</h2>${sub ? `<p class="sec-sub">${sub}</p>` : ''}</div><button class="more" data-go="${more}">더보기${I('chevR')}</button></div>
-      ${skip ? featHtml(skip) : ''}
-      <div class="rail">${list.events.filter(e => e !== skip).slice(0, 10).map(pcardHtml).join('')}</div>
+      <div class="rail">${list.events.slice(0, 10).map(pcardHtml).join('')}</div>
     </section>` : '';
-  // 이번 주말 PICK: 사진이 있는 첫 행사를 크게
-  const feat = wk.events.find(e => e.image);
+
+  // 아빠 PICK 선정 — ① 축제 우선 ② 가까운 일정 우선(이번 주말 단기 행사 → 2주 안에 시작 → 오래 진행 중) ③ 아이와 가기 좋은 순, 날짜 빠른 순
+  // (예약이 끝난 행사는 제외, 최대 5개)
+  const closed = e => e.status && e.status !== '접수중' && e.status !== '안내중';
+  const spanDays = e => (Date.parse(e.end_date) - Date.parse(e.start_date)) / 864e5;
+  const nearGroup = e => (e.start_date <= w1 && e.end_date >= w0 && spanDays(e) <= 7 ? 0 : e.start_date > w1 ? 1 : 2);
+  const pool = [...kc.events.filter(e => e.dow), ...fest.events, ...wk.events, ...soon.events, ...td.events];
+  const seenPick = new Set();
+  const picks = pool.filter(e => !closed(e) && !seenPick.has(e.id) && seenPick.add(e.id))
+    .sort((a, b) => (a.category === 'festival' ? 0 : 1) - (b.category === 'festival' ? 0 : 1)
+      || nearGroup(a) - nearGroup(b)
+      || b.family - a.family
+      || (nearGroup(a) === 2 ? a.end_date.localeCompare(b.end_date) : a.start_date.localeCompare(b.start_date))
+      || spanDays(a) - spanDays(b))
+    .slice(0, 5);
 
   view.innerHTML = `
-    <section class="hero">
-      <img src="img/hero.jpg" alt="">
-      ${wxPill(TODAY)}
-      <div class="hero-text">
-        <span class="eyebrow">${esc(S.gu)}</span>
-        <h2>우리 가족의 주말을<br>지켜주는 히어로</h2>
-        <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>
+    <section class="hero-car">
+      <div class="car-track" id="carTrack">
+        <div class="car-slide hero">
+          <img class="hero-img" src="img/hero.jpg" alt="">
+          ${wxPill(TODAY)}
+          <div class="hero-text">
+            <span class="eyebrow">${esc(S.gu)}</span>
+            <h2>우리 가족의 주말을<br>지켜주는 히어로</h2>
+            <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>
+          </div>
+        </div>
+        ${picks.map(pickSlide).join('')}
       </div>
+      ${picks.length ? `<div class="car-dots" id="carDots">${['', ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>` : ''}
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
-    ${section('이번 주말 가볼 만한 곳', wk, 'weekend', weekendWx(w0, w1) || '아이와 가기 좋은 순서로 골랐어요', feat)}
+    ${section('이번 주말 가볼 만한 곳', wk, 'weekend', weekendWx(w0, w1) || '아이와 가기 좋은 순서로 골랐어요')}
     ${td.events.length ? `<section class="sec">
       <div class="sec-head"><div><h2>오늘 열리는 행사</h2><p class="sec-sub">오늘 갈 수 있는 곳이에요</p></div><button class="more" data-go="today">더보기${I('chevR')}</button></div>
       <div class="list">${td.events.slice(0, 4).map(rowHtml).join('')}</div></section>` : ''}
     ${section('무료로 즐기는 행사', fr, 'free', '2주 안에 열리는 무료 행사')}
+    ${pl.places.length ? `<section class="sec">
+      <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 순 · 어린이박물관, 과학관, 체험관, 안전체험관 (경기도 포함)</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
+      <div class="rail">${pl.places.map(placeCard).join('')}</div></section>` : ''}
     ${section('아이와 가기 좋은 키즈카페', kc, 'kidscafe', rainSoon([TODAY, w0, w1]) ? '비 소식이 있는 날엔 실내가 좋아요' : '날씨와 상관없이 신나게 놀 수 있어요')}
     ${!wk.events.length && !td.events.length && !fr.events.length && !kc.events.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
     <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
+  setupCarousel();
 }
 
 /* ---------- 캘린더 ---------- */
@@ -305,15 +387,39 @@ async function renderMap() {
     <section class="sec"><div class="gu-list">${districts.map(d => `<button data-gu="${d.name}" class="${d.name === S.gu ? 'on' : ''}">${d.name}<small>${sum[d.name]?.n ?? 0}건</small></button>`).join('')}</div></section>`;
 }
 
+/* ---------- 가볼 곳 (상시 운영 장소) ---------- */
+async function renderPlaces() {
+  const near = nearPoint();
+  const [all, list] = await Promise.all([
+    api('/api/places', { near, limit: 500 }),
+    api('/api/places', { near, region: S.placeRegion, kind: S.placeKind, limit: 200 }),
+  ]);
+  const kinds = Object.keys(KIND).filter(k => all.places.some(p => p.kind === k));
+  const regions = [...new Set(all.places.map(p => p.region))];
+  view.innerHTML = `
+    <section class="sec">
+      <div class="sec-head"><div><h2>가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 순 · 문 여는 시간과 휴관일을 확인하세요</p></div>
+        <button class="geo ${S.near ? 'on' : ''}" data-geo>${I('pin')}${S.near ? '내 위치' : '내 위치로'}</button></div>
+      ${regions.length > 1 ? `<div class="chips" style="margin-bottom:8px"><button class="chip ${!S.placeRegion ? 'on' : ''}" data-pregion="">전체 지역</button>${regions.map(r => `<button class="chip ${S.placeRegion === r ? 'on' : ''}" data-pregion="${esc(r)}">${esc(r)}</button>`).join('')}</div>` : ''}
+      <div class="chips"><button class="chip ${!S.placeKind ? 'on' : ''}" data-pkind="">전체</button>${kinds.map(k => `<button class="chip ${S.placeKind === k ? 'on' : ''}" data-pkind="${k}">${KIND[k]}</button>`).join('')}</div>
+      <div class="result-head" style="margin-top:18px"><h2>${S.placeKind ? KIND[S.placeKind] : '전체'}</h2><span>${list.total}곳</span></div>
+      ${list.places.length ? `<div class="list">${list.places.map(placeRow).join('')}</div>` : emptyHtml('아직 등록된 곳이 없어요', '다른 분류를 골라 보세요.')}
+      <p class="foot-note" style="padding-bottom:0">출처: 서울시 문화공간 정보, 한국관광공사(TourAPI) · 사진 일부는 공공누리 1·3유형 · 운영 시간과 요금은 바뀔 수 있어요</p>
+    </section>`;
+}
+
 /* ---------- 저장 ---------- */
 async function renderSaved() {
   const ids = [...S.saved];
-  if (!ids.length) { view.innerHTML = `<section class="sec" style="min-height:60%">${emptyHtml('저장한 행사가 없어요', '마음에 드는 행사의 하트를 눌러 두면 여기 모여요.')}</section>`; return; }
-  const { events } = await api('/api/events', { ids: ids.join(',') });
-  const gone = ids.length - events.length;
+  if (!ids.length) { view.innerHTML = `<section class="sec" style="min-height:60%">${emptyHtml('저장한 곳이 없어요', '마음에 드는 행사나 장소의 하트를 눌러 두면 여기 모여요.')}</section>`; return; }
+  const [{ events }, { places }] = await Promise.all([
+    api('/api/events', { ids: ids.join(',') }),
+    api('/api/places', { ids: ids.join(',') }).catch(() => ({ places: [] })),
+  ]);
+  const gone = ids.length - events.length - places.length;
   events.sort((a, b) => a.start_date.localeCompare(b.start_date));
-  view.innerHTML = `<section class="sec"><div class="result-head"><h2>저장한 행사</h2><span>${events.length}건</span></div>
-    <div class="list">${events.map(rowHtml).join('')}</div>
+  view.innerHTML = `<section class="sec"><div class="result-head"><h2>저장한 목록</h2><span>${events.length + places.length}건</span></div>
+    <div class="list">${events.map(rowHtml).join('')}${places.map(placeRow).join('')}</div>
     ${gone > 0 ? `<p class="foot-note">종료되었거나 사라진 행사 ${gone}건은 숨겼어요.</p>` : ''}</section>`;
 }
 
@@ -358,6 +464,43 @@ function openDetail(id, push = true) {
   loadDesc(e).then(t => { const el = $('#dDesc'); if (t && el) { el.textContent = t; el.hidden = false; } }).catch(() => {});
   if (push) history.pushState({ screen: 'detail' }, '');
 }
+function openPlace(id, push = true) {
+  const p = S.cache.get(id); if (!p) return;
+  const near = nearPoint(), dist = p.lat != null && near ? km(near, p) : null;
+  const q = encodeURIComponent(`${p.name} ${p.addr}`);
+  const map = `https://map.naver.com/p/search/${q}`;
+  detail.innerHTML = `<div class="screen">
+    <div class="d-scroll">
+      <div class="d-media">${p.image ? `<div class="bg" style="background-image:url('${esc(p.image)}')"></div><img class="main" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">` : `<img class="cover" src="${placeImg(p)}" alt="">`}
+        <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button><button data-share-place="${esc(id)}" aria-label="공유">${I('share')}</button></div>
+      </div>
+      <div class="d-body">
+        <div class="badges">${placeBadges(p)}</div>
+        <h2>${esc(p.name)}</h2>
+        <div class="facts">
+          <div><b>분류</b><span>${KIND[p.kind] ?? '장소'}</span></div>
+          <div><b>요금</b><span>${p.free === 1 ? '무료' : p.free === 0 ? '유료' : '문의'}</span></div>
+          <div><b>거리</b><span>${dist == null ? '-' : distText({ dist })}</span></div>
+        </div>
+        <div class="info">
+          <div>${I('pin')}<p><b>주소</b><span>${esc(p.addr)}</span><a class="mini" target="_blank" rel="noopener" href="${map}">지도 보기</a></p></div>
+          ${p.hours ? `<div>${I('clock')}<p><b>운영 시간</b><span>${esc(p.hours)}</span></p></div>` : ''}
+          ${p.closed ? `<div>${I('calendar')}<p><b>휴관일</b><span>${esc(p.closed)}</span></p></div>` : ''}
+          ${p.fee ? `<div>${I('ticket')}<p><b>요금 안내</b><span>${esc(p.fee)}</span></p></div>` : ''}
+          ${p.stroller ? `<div>${I('users')}<p><b>유모차</b><span>${esc(p.stroller)}</span></p></div>` : ''}
+          ${p.tel ? `<div>${I('users')}<p><b>문의</b><a class="mini" style="margin:0;font-size:15px" href="tel:${esc(p.tel)}">${esc(p.tel)}</a></p></div>` : ''}
+        </div>
+        ${p.desc ? `<p class="d-desc">${esc(p.desc)}</p>` : ''}
+        <p class="d-note">${p.source === 'tourapi' || p.imageLicense ? '한국관광공사 TourAPI' : '서울시 문화공간 정보'} 기준이에요.${p.imageLicense ? ` 사진은 한국관광공사 제공(공공누리 제${p.imageLicense.slice(-1)}유형).` : ''} 운영 시간·휴관일·요금은 바뀔 수 있으니 방문 전에 홈페이지나 전화로 확인해 주세요.</p>
+      </div>
+    </div>
+    <div class="d-bar">
+      <button class="sq ${S.saved.has(id) ? 'on' : ''}" data-dheart="${esc(id)}" aria-label="저장">${I('heart')}</button>
+      ${p.url ? `<a class="cta" target="_blank" rel="noopener" href="${esc(p.url)}">홈페이지 보기</a>` : `<a class="cta" target="_blank" rel="noopener" href="${map}">지도에서 보기</a>`}
+    </div></div>`;
+  detail.hidden = false;
+  if (push) history.pushState({ screen: 'detail' }, '');
+}
 function hideScreens() { detail.hidden = true; searchEl.hidden = true; }
 function closeScreen() { if (history.state?.screen) history.back(); else hideScreens(); }
 window.addEventListener('popstate', () => { if (!detail.hidden && !searchEl.hidden) detail.hidden = true; else hideScreens(); });
@@ -385,14 +528,33 @@ async function runSearch() {
       <span class="chips" style="justify-content:center;flex-wrap:wrap;margin:0">${['축제', '전시', '체험', '공원', '도서관', '콘서트'].map(k => `<button class="chip" data-kw="${k}">${k}</button>`).join('')}</span></div>`;
     return;
   }
-  const r = await api('/api/events', { q, all: 1, from: TODAY, to: addDays(TODAY, 365), gu: S.searchAll ? '' : S.gu });
+  const [r, pr] = await Promise.all([api('/api/events', { q, all: 1, from: TODAY, to: addDays(TODAY, 365), gu: S.searchAll ? '' : S.gu }), api('/api/places', { q, near: nearPoint(), limit: 6 }).catch(() => ({ places: [] }))]);
   if (($('#sInput')?.value ?? '').trim() !== q) return; // 입력이 바뀌었으면 버림
-  body.innerHTML = r.events.length
+  const placeHtml = pr.places.length ? `<div class="result-head" style="margin-top:6px"><h2>가볼 만한 곳</h2><span>${pr.places.length}곳</span></div><div class="list" style="margin:0 -16px">${pr.places.map(placeRow).join('')}</div>` : '';
+  body.innerHTML = placeHtml + (r.events.length
     ? `<div class="result-head" style="margin-top:6px"><h2>검색 결과</h2><span>${r.total}건</span></div><div class="list" style="margin:0 -16px">${r.events.map(rowHtml).join('')}</div>`
-    : emptyHtml('검색 결과가 없어요', S.searchAll ? '다른 단어로 찾아 보세요.' : '“서울 전체”로 넓혀 보세요.');
+    : pr.places.length ? '' : emptyHtml('검색 결과가 없어요', S.searchAll ? '다른 단어로 찾아 보세요.' : '“서울 전체”로 넓혀 보세요.'));
 }
 
 /* ---------- 공유·저장 ---------- */
+async function sharePlace(id) {
+  const p = S.cache.get(id); if (!p) return;
+  const text = `${p.name}\n${p.region} ${p.gu} · ${p.addr}`, url = p.url || `${location.origin}${location.pathname}?p=${encodeURIComponent(id)}`;
+  try {
+    if (navigator.share) await navigator.share({ title: p.name, text, url });
+    else { await navigator.clipboard.writeText(`${text}\n${url}`); toast('복사했어요'); }
+  } catch { /* 공유 취소 */ }
+}
+// 내 위치로 가까운 순 정렬 (위치는 이 기기에서만 쓰고 저장·전송하지 않는다)
+function useMyLocation() {
+  if (S.near) { S.near = null; toast('선택한 지역 기준으로 돌아갔어요'); return render(); }
+  if (!navigator.geolocation) return toast('이 기기에서는 위치를 쓸 수 없어요');
+  toast('위치를 확인하는 중…');
+  navigator.geolocation.getCurrentPosition(
+    pos => { S.near = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: '내 위치' }; render(); },
+    () => toast('위치를 가져오지 못했어요. 권한을 확인해 주세요'),
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+}
 function toggleSave(id) {
   S.saved.has(id) ? S.saved.delete(id) : S.saved.add(id);
   store.set('saved', [...S.saved]);
@@ -409,7 +571,7 @@ async function share(id) {
 }
 
 /* ---------- 헤더·탭·렌더 ---------- */
-const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['map', 'map', '구 지도'], ['saved', 'heart', '저장']];
+const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '구 지도'], ['saved', 'heart', '저장']];
 function renderChrome() {
   $('#regionBtn').innerHTML = `${I('pin')}${esc(S.gu)}`;
   $('#searchBtn').innerHTML = I('search');
@@ -421,11 +583,12 @@ const skeleton = tab => tab === 'home'
   : `<div class="sec">${SK_ROW.repeat(5)}</div>`;
 
 async function render(keepScroll = true) {
+  clearInterval(carTimer);
   const y = keepScroll ? view.scrollTop : 0;
   renderChrome();
   if (!keepScroll && S.tab !== 'saved') view.innerHTML = skeleton(S.tab); // 탭·지역을 바꿀 때 빈 화면 대신 뼈대
   try {
-    await ({ home: renderHome, cal: renderCal, map: renderMap, saved: renderSaved }[S.tab])();
+    await ({ home: renderHome, cal: renderCal, places: renderPlaces, map: renderMap, saved: renderSaved }[S.tab])();
   } catch (err) {
     console.error(err);
     view.innerHTML = `<section class="sec">${emptyHtml('불러오지 못했어요', '서버 연결을 확인하고 다시 시도해 주세요.')}</section>`;
@@ -452,7 +615,15 @@ document.addEventListener('click', e => {
   const dh = t.closest('[data-dheart]');
   if (dh) { toggleSave(dh.dataset.dheart); refreshDetailHeart(dh.dataset.dheart); return; }
   const sh = t.closest('[data-share]'); if (sh) return share(sh.dataset.share);
+  const shp = t.closest('[data-share-place]'); if (shp) return sharePlace(shp.dataset.sharePlace);
   if (t.closest('[data-close]')) return closeScreen();
+  const dot = t.closest('[data-slide]');
+  if (dot) { carHold?.(); const tr = $('#carTrack'); tr.scrollTo({ left: Number(dot.dataset.slide) * tr.clientWidth, behavior: 'smooth' }); return; }
+  const pl = t.closest('[data-place]'); if (pl) return openPlace(pl.dataset.place);
+  const tg = t.closest('[data-tab-go]'); if (tg) return setTab(tg.dataset.tabGo);
+  const pk = t.closest('[data-pkind]'); if (pk) { S.placeKind = pk.dataset.pkind; return render(); }
+  const pr = t.closest('[data-pregion]'); if (pr) { S.placeRegion = pr.dataset.pregion; return render(); }
+  if (t.closest('[data-geo]')) return useMyLocation();
   const card = t.closest('[data-id]'); if (card) return openDetail(card.dataset.id);
 
   const kw = t.closest('[data-kw]');
@@ -538,15 +709,22 @@ function startSplash() {
   const splash = startSplash();
   renderChrome();
   view.innerHTML = `<div class="loading"><img src="img/logo.png" alt="">갈 곳을 찾는 중…</div>`;
-  const [meta] = await Promise.all([api('/api/meta').catch(() => null), loadWeather()]);
-  S.meta = meta;
+  const [meta, map] = await Promise.all([api('/api/meta').catch(() => null), fetch('seoul-map.json').then(r => r.json()).catch(() => null), loadWeather()]);
+  S.meta = meta; S.mapData = map;
   const qs = new URLSearchParams(location.search);
-  if (['home', 'cal', 'map', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
+  if (['home', 'cal', 'places', 'map', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
+  if (qs.get('kind') in KIND) S.placeKind = qs.get('kind');
+  if (['서울', '경기'].includes(qs.get('region'))) S.placeRegion = qs.get('region');
   await render(false);
   const d = qs.get('d'); // 공유 링크: ?d=<행사 id>&g=<구>
   if (d) {
     const found = (await loadGu(qs.get('g') || S.gu).catch(() => [])).find(e => e.id === d);
     if (found) { S.cache.set(d, found); openDetail(d, false); }
+  }
+  const pid = qs.get('p'); // 장소 공유 링크: ?p=<장소 id>
+  if (pid) {
+    const found = (await api('/api/places', { ids: pid }).catch(() => ({ places: [] }))).places[0];
+    if (found) { S.cache.set(pid, found); openPlace(pid, false); }
   }
   if (qs.has('search')) openSearch(qs.get('search'));
   await splash.finish();

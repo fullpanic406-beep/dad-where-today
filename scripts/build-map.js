@@ -32,14 +32,16 @@ function area(ring) { // 부호 있는 면적 + 무게중심
 }
 
 const districts = geo.features.map(f => {
-  let d = '', best = null;
+  let d = '', best = null, geoBest = null;
   for (const poly of rings(f)) {
     const pts = poly[0].map(([x, y]) => [px(x), py(y)]);
     d += 'M' + pts.map(([x, y]) => `${r1(x)} ${r1(y)}`).join('L') + 'Z';
     const ar = area(pts);
     if (!best || ar.a > best.a) best = ar;
+    const g = area(poly[0]); // 경도·위도 그대로의 무게중심 (가까운 순 정렬의 기준점)
+    if (!geoBest || g.a > geoBest.a) geoBest = g;
   }
-  return { name: f.properties.name, d, cx: r1(best.cx), cy: r1(best.cy) };
+  return { name: f.properties.name, d, cx: r1(best.cx), cy: r1(best.cy), lat: Math.round(geoBest.cy * 1e4) / 1e4, lng: Math.round(geoBest.cx * 1e4) / 1e4 };
 }).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
 writeFileSync(path.join(root, 'public', 'seoul-map.json'), JSON.stringify({ viewBox: `0 0 ${W} ${H}`, districts }));

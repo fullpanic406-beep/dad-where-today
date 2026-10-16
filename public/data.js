@@ -96,3 +96,21 @@ export async function querySummary(p) {
   }
   return { gu: out };
 }
+
+// ---- 가볼 만한 곳(상시 운영 장소): 어린이박물관·과학관·체험관 등 ----
+export const loadPlaces = () => once('places', () => getJson('data/places.json'));
+const rad = x => (x * Math.PI) / 180;
+export const km = (a, b) => { // 두 지점(위도·경도) 사이 거리(km)
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+};
+export async function queryPlaces(p) {
+  const { places } = await loadPlaces();
+  if (p.ids) { const want = new Set(String(p.ids).split(',').filter(Boolean)); return { places: places.filter(x => want.has(x.id)) }; }
+  let list = places.filter(x => (!p.region || x.region === p.region) && (!p.kind || x.kind === p.kind) && (!p.free || x.free === 1)
+    && (!p.q || x.name.toLowerCase().includes(p.q.toLowerCase()) || x.addr.toLowerCase().includes(p.q.toLowerCase())));
+  list = list.map(x => ({ ...x, dist: p.near && x.lat != null ? km(p.near, x) : null }));
+  list.sort((a, b) => (p.near ? (a.dist ?? 1e9) - (b.dist ?? 1e9) : 0) || a.name.localeCompare(b.name, 'ko'));
+  return { places: list.slice(0, p.limit || 200), total: list.length };
+}

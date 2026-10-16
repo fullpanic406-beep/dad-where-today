@@ -12,3 +12,11 @@ node_modules/
 data/*.db*
 data/*.log
 data/*.err
+
+# 인증키를 적어 둔 메모 파일(이름이 달라도 올라가지 않도록)
+api*.txt
+tour_api*.txt
+*key*.txt
+
+# 상세 정보 캐시(호출 한도 절약)
+.cache/

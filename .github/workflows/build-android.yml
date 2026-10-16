@@ -24,10 +24,19 @@ jobs:
 
       - run: npm ci
 
+      # TourAPI 상세(운영 시간·요금) 캐시: 하루 호출 한도(약 1,000건)를 아끼려고 실행 사이에 이어 쓴다
+      - name: TourAPI 캐시
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: tourapi-${{ github.run_id }}
+          restore-keys: tourapi-
+
       # 앱 안에 넣을 데이터 스냅샷(오프라인 대비). 평소에는 아래 배포 주소의 최신 데이터를 읽는다.
       - name: 행사 수집
         env:
           SEOUL_API_KEY: ${{ secrets.SEOUL_API_KEY }}
+          TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
         run: |
           test -n "$SEOUL_API_KEY" || { echo "::error::SEOUL_API_KEY 시크릿이 설정되지 않았습니다"; exit 1; }
           node src/ingest.js
