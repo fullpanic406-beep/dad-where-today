@@ -49,7 +49,7 @@ export async function fetchEvents(_seoulKey, today, log) {
   const all = [];
   for (let page = 1; page <= 10; page++) {
     let body;
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
       try {
         const res = await fetch(`${BASE}?serviceKey=${key}&pageNo=${page}&numOfRows=1000&type=json`, { signal: AbortSignal.timeout(40000) });
         const text = await res.text();
@@ -58,8 +58,9 @@ export async function fetchEvents(_seoulKey, today, log) {
         if (j.header?.resultCode && j.header.resultCode !== '00') throw new Error(`${j.header.resultCode} ${j.header.resultMsg}`);
         body = j.body; break;
       } catch (e) {
-        if (i === 3 || /활용신청|인증|LIMIT|한도/.test(e.message)) throw new Error(e.message.replaceAll(key, '<KEY>'));
-        await new Promise(r => setTimeout(r, 1000 * i));
+        const why = e.cause?.code ? ` (${e.cause.code})` : '';
+        if (i === 4 || /활용신청|인증|LIMIT|한도/.test(e.message)) throw new Error((e.message + why).replaceAll(key, '<KEY>'));
+        await new Promise(r => setTimeout(r, 2500 * i));
       }
     }
     const it = body?.items?.item;

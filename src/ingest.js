@@ -44,6 +44,15 @@ async function main() {
   const events = [], descs = {}, seen = new Set(), counts = {}, warnings = [];
   let unknownGu = 0;
   const evIndex = {}; // 구 → 이미 담은 행사(중복 합치기용)
+  // 이전 배포 데이터(받아 둔 경우): 선택 소스가 일시적으로 실패한 날 그 소스의 행사를 이어 쓰려고 먼저 읽어 둔다
+  const prevEvents = [], prevDescs = {};
+  for (const g of GU) {
+    try {
+      const f = path.join(OUT, 'gu', `${g}.json`), d = path.join(OUT, 'desc', `${g}.json`);
+      if (existsSync(f)) prevEvents.push(...JSON.parse(readFileSync(f, 'utf8')));
+      if (existsSync(d)) Object.assign(prevDescs, JSON.parse(readFileSync(d, 'utf8')));
+    } catch { /* 이전 데이터가 깨져 있으면 무시 */ }
+  }
   const normTitle = t => t.replace(/[\s\[\]()「」<>·\-_:：,.!?'"‘’“”~]|제?\d+회|\d+주년|20\d\d/g, '');
   const findDup = e => {
     const n = normTitle(e.title);
@@ -57,9 +66,17 @@ async function main() {
     } catch (e) {
       if (!src.optional) throw e;
       process.stdout.write('\n');
-      warnings.push(`${src.label}: ${e.message}`);
-      console.log(`[ingest] 경고 — ${src.label} 건너뜀: ${e.message}`);
-      counts[src.name] = 0;
+      // 일시적인 실패(네트워크 등)로 행사가 사이트에서 갑자기 사라지지 않도록, 이전에 배포된 이 소스의 행사 중 아직 끝나지 않은 것을 이어 쓴다
+      const keep = prevEvents.filter(p => p.source === src.name && p.end_date >= today && GU.includes(p.gu) && !seen.has(p.id));
+      for (const p of keep) {
+        seen.add(p.id); events.push(p);
+        (evIndex[p.gu] ??= []).push({ n: normTitle(p.title), ev: p });
+        if (prevDescs[p.id]) descs[p.id] = prevDescs[p.id];
+      }
+      const note = keep.length ? ` (이전 데이터 ${keep.length}건 유지)` : '';
+      warnings.push(`${src.label}: ${e.message}${note}`);
+      console.log(`[ingest] 경고 — ${src.label} 건너뜀: ${e.message}${note}`);
+      counts[src.name] = keep.length;
       continue;
     }
     process.stdout.write('\n');
