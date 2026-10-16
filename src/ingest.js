@@ -16,6 +16,7 @@ import { GU, CATS } from './gu.js';
 import * as seoulEvents from './sources/seoul-events.js';
 import * as yeyak from './sources/yeyak.js';
 import * as yeogijeogi from './sources/yeogijeogi.js';
+import * as manual from './sources/manual.js';
 import * as cultureFestival from './sources/culture-festival.js';
 import * as tourFestival from './sources/tourapi-festival.js';
 import * as seoulSpace from './places/seoul-space.js';
@@ -24,7 +25,7 @@ import * as tourapi from './places/tourapi.js';
 loadEnv();
 
 const KEY = process.env.SEOUL_API_KEY || 'sample';
-const SOURCES = [seoulEvents, yeyak, yeogijeogi, cultureFestival, tourFestival]; // 앞에 둔 소스를 우선(중복 제거 기준). optional 소스는 실패해도 나머지를 계속 진행(경고만)
+const SOURCES = [manual, seoulEvents, yeyak, yeogijeogi, cultureFestival, tourFestival]; // 앞에 둔 소스를 우선(중복 제거 기준). optional 소스는 실패해도 나머지를 계속 진행(경고만)
 const PLACE_SOURCES = [seoulSpace, tourapi]; // 장소 소스(앞에 둔 소스의 값을 우선): 서울시 문화공간, 한국관광공사 TourAPI(서울·경기, TOURAPI_KEY 필요)
 const OUT = path.join(ROOT, 'public', 'data');
 const pad = n => String(n).padStart(2, '0');

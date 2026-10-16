@@ -452,7 +452,7 @@ function openDetail(id, push = true) {
           ${e.target && (e.target.length > 9 || /\(/.test(e.target)) ? `<div>${I('users')}<p><b>대상 안내</b><span>${esc(e.target)}</span></p></div>` : ''}
         </div>
         <p class="d-desc" id="dDesc" hidden></p>
-        <p class="d-note">${{ yeyak: '서울시 공공서비스예약 정보(공공누리 1유형) 기준이에요.', yeogijeogi: '서울시 우리동네 키움포털 정보 기준이에요.', 'culture-festival': '전국문화축제표준데이터(공공데이터포털, 지자체 등록) 기준이에요.', 'tourapi-festival': '한국관광공사 TourAPI 정보 기준이에요.' }[e.source] ?? '서울 열린데이터광장(서울시 문화행사 정보) 기준이에요.'}${e.image_license ? ` 사진은 한국관광공사 제공(공공누리 제${e.image_license.slice(-1)}유형).` : ''} 일정·요금·접수 상태는 바뀔 수 있으니 방문 전에 상세 페이지에서 확인해 주세요.</p>
+        <p class="d-note">${e.source === 'manual' ? (e.source_note || '직접 확인해 등록한 정보예요.') : ({ yeyak: '서울시 공공서비스예약 정보(공공누리 1유형) 기준이에요.', yeogijeogi: '서울시 우리동네 키움포털 정보 기준이에요.', 'culture-festival': '전국문화축제표준데이터(공공데이터포털, 지자체 등록) 기준이에요.', 'tourapi-festival': '한국관광공사 TourAPI 정보 기준이에요.' }[e.source] ?? '서울 열린데이터광장(서울시 문화행사 정보) 기준이에요.')}${e.image_license ? ` 사진은 한국관광공사 제공(공공누리 제${e.image_license.slice(-1)}유형).` : ''} 일정·요금·접수 상태는 바뀔 수 있으니 방문 전에 상세 페이지에서 확인해 주세요.</p>
       </div>
     </div>
     <div class="d-bar">
