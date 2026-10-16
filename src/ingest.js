@@ -18,6 +18,7 @@ import * as yeyak from './sources/yeyak.js';
 import * as yeogijeogi from './sources/yeogijeogi.js';
 import { dongOf, dongFromText } from './dong.js';
 import * as manual from './sources/manual.js';
+import { applyEnrich } from './enrich.js';
 import * as cultureFestival from './sources/culture-festival.js';
 import * as tourFestival from './sources/tourapi-festival.js';
 import * as seoulSpace from './places/seoul-space.js';
@@ -120,6 +121,9 @@ async function main() {
     if (e.dong) dongHit++;
   }
   console.log(`[ingest] 동 정보: 행사 ${events.length}건 중 ${dongHit}건(${Math.round(dongHit / events.length * 100)}%)`);
+
+  // 직접 확인해 적어 둔 보강 내용(data/enrich.json)을 덧씌운다
+  applyEnrich(events, descs, path.join(ROOT, 'data', 'enrich.json'));
 
   // 구별로 나눠 저장
   rmSync(path.join(OUT, 'gu'), { recursive: true, force: true });
