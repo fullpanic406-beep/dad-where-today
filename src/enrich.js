@@ -8,21 +8,26 @@
 //     "desc": "프로그램: …\n· 항목: 설명",               // (선택) 상세 설명을 통째로 바꾼다('이런 걸 해요' 카드에 나온다)
 //     "note": "구청 공지·기사 ○○ 확인(2026-10-16)",       // 상세 화면 아래 안내 문구(무엇을 근거로 했는지)
 //     "sources": ["https://…"] }                         // 근거 주소(화면에는 안 나오고 기록용)
+//   set.title 로 제목 오탈자를 고칠 수 있고, "hide": true 를 주면 그 행사를 목록에서 뺀다(원본 날짜가 틀려 이미 끝난 행사일 때; note 에 근거를 적는다).
 import { existsSync, readFileSync } from 'node:fs';
 
 const norm = s => String(s ?? '').replace(/[\s()\[\]·\-_,.:!~]/g, '').toLowerCase();
-const KEYS = ['time', 'fee', 'is_free', 'link', 'image', 'place', 'target'];
+const KEYS = ['time', 'fee', 'is_free', 'link', 'image', 'place', 'target', 'title'];
 
 export function applyEnrich(events, descs, file, log = console.log) {
   if (!existsSync(file)) return { applied: 0, unmatched: [] };
   let list;
   try { list = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { log(`[enrich] 읽지 못해 건너뜀: ${e.message}`); return { applied: 0, unmatched: [] }; }
-  let applied = 0; const unmatched = [];
+  let applied = 0; const unmatched = [], hidden = [];
   for (const en of list) {
     if (!en?.title || !en.gu) continue;
     const t = norm(en.title);
     const hits = events.filter(e => e.gu === en.gu && norm(e.title).includes(t) && (!en.start_date || e.start_date === en.start_date));
     if (!hits.length) { unmatched.push(`${en.gu} ${en.title}`); continue; }
+    if (en.hide) {
+      for (const e of hits) { events.splice(events.indexOf(e), 1); delete descs[e.id]; }
+      applied += hits.length; hidden.push(`${en.gu} ${en.title}`); continue;
+    }
     for (const e of hits) {
       for (const k of KEYS) if (en.set?.[k] !== undefined && en.set[k] !== '') e[k] = en.set[k];
       if (en.desc) descs[e.id] = en.desc;
@@ -30,6 +35,6 @@ export function applyEnrich(events, descs, file, log = console.log) {
       e.enriched = true; applied++;
     }
   }
-  log(`[enrich] 보강 ${applied}건 적용${unmatched.length ? ` · 일치하는 행사 없음(종료·제목 변경 가능): ${unmatched.join(', ')}` : ''}`);
+  log(`[enrich] 보강 ${applied}건 적용${hidden.length ? ` · 숨김 ${hidden.join(', ')}` : ''}${unmatched.length ? ` · 일치하는 행사 없음(종료·제목 변경 가능): ${unmatched.join(', ')}` : ''}`);
   return { applied, unmatched };
 }
