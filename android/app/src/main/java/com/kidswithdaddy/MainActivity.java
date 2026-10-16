@@ -1,4 +1,4 @@
-package com.example.dadwheretoday;
+package com.kidswithdaddy;
 
 import com.getcapacitor.BridgeActivity;
 

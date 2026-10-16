@@ -80,7 +80,7 @@ Node 20 이상. 외부 패키지 없음. 인증키: data.seoul.go.kr 회원가�
   npm run cap:sync
   npm run cap:open        # Android Studio 에서 ▶ 실행 또는 Build > Build APK
   ```
-- **출시 전에 정할 것**: `capacitor.config.json` 의 `appId`(지금은 임시값 `com.example.dadwheretoday`)는 구글 플레이에 올리면 바꿀 수 없으니 **업로드 전에** 확정한다. 변경 시 `android/` 를 지우고 `npx cap add android` 로 다시 만들고 아이콘을 다시 적용한다. 플레이 업로드용 서명(AAB)과 AdMob 연동은 아직 하지 않았다.
+- **출시 전에 정할 것**: `capacitor.config.json` 의 `appId`(지금은 확정값 `com.kidswithdaddy`(2026-10-16))는 구글 플레이에 올린 뒤에는 바꿀 수 없다. 플레이 업로드용 서명(AAB)과 AdMob 연동은 아직 하지 않았다.
 
 ## 데이터 출처·주의
 - 서울시 문화행사 정보, 서울시 공공서비스예약 정보(공공누리 1유형: 출처 표시 시 상업적 이용·변경 가능) — 서울 열린데이터광장.
