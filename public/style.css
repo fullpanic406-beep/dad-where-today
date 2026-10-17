@@ -367,3 +367,11 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .map-card text.lt { fill: #fff; stroke: rgba(150, 50, 0, .35); stroke-width: 2px; }
 .map-card text.sel { font-size: 14.5px; }
 .map-card text .cnt { font-size: 11px; font-weight: 700; }
+
+/* 비 오는 날 실내 대안 카드 */
+.rain-card { background: var(--blue-soft); border-radius: 18px; margin: 4px 16px 8px; padding: 14px 0 14px; }
+.rain-card .sec-head { padding: 0 14px; }
+.rain-card .sec-head h2 { display: flex; align-items: center; gap: 6px; }
+.rain-card .sec-head svg.i { color: var(--blue); }
+.rain-card .rail { margin: 0; padding: 0 14px 2px; }
+.rain-card .rain-go { display: block; width: calc(100% - 28px); margin: 10px 14px 0; }

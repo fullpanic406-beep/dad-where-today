@@ -139,6 +139,18 @@ function weekendWx(w0, w1) {
   const days = [...new Set([w0, w1])].filter(d => S.weather?.[d]);
   return days.length ? days.map(d => `${DOW[parse(d).getDay()]} ${wxShort(S.weather[d])}`).join(' · ') : '';
 }
+const INDOOR = new Set(['kidsmuseum', 'science', 'experience', 'safety', 'museum']);   // 비 와도 갈 수 있는 실내 장소
+// 비 예보가 있는 날(오늘·이번 주말) 홈에 띄우는 실내 대안 카드
+function rainCard(days, indoor, kc) {
+  const label = days[0] === TODAY ? '오늘' : days.length > 1 ? '이번 주말' : `${DOW[parse(days[0]).getDay()]}요일`;
+  const w = S.weather[days[0]];
+  const n = kc.events.length;
+  return `<section class="sec rain-card">
+    <div class="sec-head"><div><h2>${I('rain')} ${label}은 실내가 좋아요</h2><p class="sec-sub">${esc(wxShort(w))} · 비 와도 아이와 놀 수 있는 곳이에요</p></div></div>
+    ${indoor.length ? `<div class="rail">${indoor.map(placeCard).join('')}</div>` : ''}
+    ${n ? `<button class="go-btn rain-go" data-go="kidscafe">키즈카페 ${n}곳 보기</button>` : ''}
+  </section>`;
+}
 const rainSoon = days => days.some(d => ['rain', 'chance'].includes(S.weather?.[d]?.status));
 
 /* ---------- 공통 조각 ---------- */
@@ -289,7 +301,8 @@ function updatedLabel() {
 async function renderHome() {
   const [w0, w1] = weekendOf(TODAY);
   const near = nearPoint();
-  const [wk, td, kc, fest, soon, pl, pinnedRes] = await Promise.all([
+  const rainDays = [...new Set([TODAY, w0, w1])].filter(d => S.weather?.[d]?.status === 'rain');   // 비 예보가 있는 날(오늘·이번 주말)
+  const [wk, td, kc, fest, soon, pl, pinnedRes, indoorRes] = await Promise.all([
     api('/api/events', { gu: S.gu, from: w0, to: w1 }),
     api('/api/events', { gu: S.gu, from: TODAY, to: TODAY }),
     api('/api/events', { gu: S.gu, from: TODAY, to: w1, cat: 'kidscafe' }),
@@ -297,7 +310,9 @@ async function renderHome() {
     api('/api/events', { gu: S.gu, from: TODAY, to: addDays(TODAY, 13) }),
     api('/api/places', { near, limit: 12 }).catch(() => ({ places: [], total: 0 })),
     Promise.all(PINNED_PLACES.map(n => api('/api/places', { q: n, limit: 10 }).then(r => r.places.find(p => p.name === n)).catch(() => null))),
+    rainDays.length ? api('/api/places', { near, limit: 80 }).catch(() => ({ places: [] })) : Promise.resolve({ places: [] }),
   ]);
+  const indoor = indoorRes.places.filter(p => INDOOR.has(p.kind)).sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9)).slice(0, 10);
   const pinned = pinnedRes.filter(Boolean); // 데이터에 없으면 건너뛴다
   pl.places.sort((a, b) => byArea(a, b) || (a.dist ?? 1e9) - (b.dist ?? 1e9));
   const sc = [['today', 'sun', '오늘'], ['weekend', 'sparkle', '이번 주말'], ['free', 'gift', '무료'], ['kids', 'smile', '아이와'], ['festival', 'flag', '축제']];
@@ -341,6 +356,7 @@ async function renderHome() {
       ${picks.length + pinned.length ? `<div class="car-ctl"><button class="car-btn" data-car="-1" aria-label="이전 배너">${I('back')}</button><div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div><button class="car-btn" data-car="1" aria-label="다음 배너">${I('chevR')}</button></div>` : ''}
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
+    ${rainDays.length ? rainCard(rainDays, indoor, kc) : ''}
     ${section('이번 주말 가볼 만한 곳', { events: [...wk.events].sort((a, b) => byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}구·동 순서로 모았어요`, 20)}
     ${pl.places.length ? `<section class="sec">
       <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 12곳 · 구·동 순서</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
