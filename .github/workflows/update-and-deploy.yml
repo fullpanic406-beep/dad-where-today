@@ -2,7 +2,7 @@ name: 행사 업데이트 및 배포
 
 on:
   schedule:
-    - cron: '0 19 * * 0,1'   # 월·화 04:00 (한국 시간) — GitHub 는 UTC 기준(일·월 19:00). 월요일에 실패해도 화요일에 다시 받는다
+    - cron: '0 1 * * 1,2'    # 월·화 10:00 (한국 시간) — GitHub 는 UTC 기준(월·화 01:00). 월요일에 실패해도 화요일에 다시 받는다
   workflow_dispatch:         # Actions 탭에서 수동 실행
   push:
     branches: [main]

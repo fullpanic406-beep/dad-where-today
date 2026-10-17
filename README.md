@@ -5,7 +5,7 @@
 
 ## 구조
 ```
-GitHub Actions (매주 월·화 04:00 KST)
+GitHub Actions (매주 월·화 10:00 KST)
   └ node src/ingest.js ── 서울시 문화행사 + 서울시 공공서비스예약(문화체험·교육) + 여기저기 서울형 키즈카페
         └ public/data/  meta.json · index.json(지도용 요약) · gu/<구>.json · desc/<구>.json
   └ public/ 을 GitHub Pages 로 배포
@@ -50,7 +50,7 @@ Node 20 이상. 외부 패키지 없음. 인증키: data.seoul.go.kr 회원가�
 ### 알아둘 점
 - **해외 IP 접근**: Actions 서버는 해외에 있다. 서울시 API 가 해외 IP 를 막는지는 확인되지 않았다. 첫 실행에서 실패하면 로그에 오류가 남고 배포는 건너뛴다(기존 사이트 유지). 막히는 경우 한국 리전 서버로 옮긴다(`npm run ingest` 를 서버 cron 으로).
 - **스케줄 중단**: 저장소에 60일 넘게 활동이 없으면 GitHub 가 스케줄 실행을 자동으로 끌 수 있다. 가끔 Actions 탭을 확인하거나 수동 실행한다.
-- 실패 알림은 GitHub 기본 메일(워크플로 실패 시)을 쓴다. 실행 시각은 정확히 04:00 이 아니라 몇 분~수십 분 밀릴 수 있다.
+- 실패 알림은 GitHub 기본 메일(워크플로 실패 시)을 쓴다. 실행 시각은 정확히 10:00 이 아니라 몇 분~수십 분 밀릴 수 있다.
 
 ## 폰·외부 기기에서 열기
 - **같은 와이파이의 폰**: `http://<PC의 IP>:3000` (localhost 는 폰 자신을 가리키므로 안 된다). Windows 방화벽이 막으면 `Set-NetConnectionProfile -InterfaceAlias "Wi-Fi" -NetworkCategory Private` 와 3000번 포트 허용 규칙이 필요하다(관리자 PowerShell, 집 와이파이일 때만).
