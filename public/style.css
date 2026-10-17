@@ -172,7 +172,7 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .gu-list button.on small { color: var(--brand-dark); }
 
 /* 전체 화면 (상세·검색) */
-.screen { position: absolute; inset: 0; z-index: 30; background: var(--card); display: flex; flex-direction: column; animation: slide .22s ease-out; }
+.screen { position: absolute; inset: 0; z-index: 30; background: var(--card); display: flex; flex-direction: column; animation: slide .14s ease-out; }
 @keyframes slide { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 .d-scroll { flex: 1; overflow-y: auto; }
 .d-media { position: relative; height: 300px; background: #20242E; overflow: hidden; }

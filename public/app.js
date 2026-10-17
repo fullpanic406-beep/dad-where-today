@@ -740,7 +740,7 @@ function setTab(t) {
   ghost.className = 'view-ghost'; ghost.innerHTML = view.innerHTML;
   Object.assign(ghost.style, { top: r.top - ar.top + 'px', left: r.left - ar.left + 'px', width: r.width + 'px', height: r.height + 'px' });
   ghost.scrollTop = view.scrollTop; app.appendChild(ghost); ghost.scrollTop = view.scrollTop;
-  const opt = { duration: 280, easing: 'cubic-bezier(.22,.8,.3,1)' };
+  const opt = { duration: 150, easing: 'cubic-bezier(.22,.8,.3,1)' };
   ghost.animate([{ transform: 'none' }, { transform: `translateX(${-100 * dir}%)` }], opt).finished.then(() => ghost.remove(), () => ghost.remove());
   S.tab = t; render(false);
   view.animate([{ transform: `translateX(${100 * dir}%)` }, { transform: 'none' }], opt);
