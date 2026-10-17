@@ -408,3 +408,93 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .pick-why svg.i { width: 16px; height: 16px; }
 .pick-reason { font-size: 15px; color: var(--sub); margin: -8px 0 12px; }
 .pick-meta { font-size: 14px; color: var(--sub); line-height: 1.6; margin: 12px 0 0; }
+
+/* ---- 고급화 다듬기 (v0.8 시안): 색·그림자·여백·타이포만 조정 ---- */
+:root {
+  --bg: #F6F4F1;
+  --ink: #1B1D22;
+  --line: #EEEBE6;
+  --shadow-s: 0 1px 2px rgba(40, 28, 16, .05), 0 2px 8px rgba(40, 28, 16, .04);
+  --shadow-m: 0 2px 4px rgba(40, 28, 16, .05), 0 10px 28px rgba(40, 28, 16, .09);
+  --shadow-brand: 0 6px 16px rgba(255, 107, 26, .28);
+}
+body { background: #E7E3DE; -webkit-font-smoothing: antialiased; }
+
+/* 상단 바: 얇은 유리 느낌 */
+.top { background: rgba(255, 255, 255, .86); backdrop-filter: saturate(1.6) blur(14px); -webkit-backdrop-filter: saturate(1.6) blur(14px); position: relative; z-index: 5; }
+.brand h1 { font-size: 17.5px; font-weight: 800; letter-spacing: -0.045em; }
+.logo { border-radius: 9px; box-shadow: 0 1px 4px rgba(40, 28, 16, .18); }
+.region { background: linear-gradient(180deg, #FFF6EE, #FFEBDC); box-shadow: inset 0 0 0 1px rgba(255, 107, 26, .16); }
+
+/* 하단 탭: 떠 있는 유리 바 + 활성 점 */
+.tabs { background: rgba(255, 255, 255, .88); backdrop-filter: saturate(1.6) blur(16px); -webkit-backdrop-filter: saturate(1.6) blur(16px); border-top: 1px solid rgba(40, 28, 16, .06); box-shadow: 0 -6px 20px rgba(40, 28, 16, .04); }
+.tabs button { position: relative; color: #A9A39B; letter-spacing: -0.02em; transition: color .15s; }
+.tabs button.on::before { content: ''; position: absolute; top: 0; left: 50%; width: 22px; height: 3px; margin-left: -11px; border-radius: 0 0 3px 3px; background: var(--brand); }
+.tabs button.on svg.i { stroke-width: 2; }
+
+/* 섹션: 평평한 흰 면 → 둥근 카드 */
+#view { background: var(--bg); }
+.sec { margin: 0 12px 12px; padding: 22px 16px 20px; border-radius: 22px; box-shadow: var(--shadow-s); }
+.sec-head h2 { font-size: 19px; letter-spacing: -0.04em; }
+.sec-sub { color: #9A948C; }
+.more { color: #9A948C; }
+.list, .rail, .chips { margin-left: -16px; margin-right: -16px; }
+
+/* 배너: 하단 모서리 라운드 + 그림자 */
+.hero-car { margin-bottom: 12px; border-radius: 0 0 26px 26px; overflow: hidden; box-shadow: 0 12px 28px rgba(190, 70, 10, .18); }
+.wx { background: rgba(255, 255, 255, .78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0, 0, 0, .08); }
+.car-ctl { background: rgba(20, 14, 8, .32); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+/* 바로가기 타일: 입체감 */
+.shortcuts .tile { background: linear-gradient(160deg, #FFF8F2, #FFE9D8); box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 6px 14px rgba(255, 107, 26, .13); }
+.shortcuts button { font-weight: 700; letter-spacing: -0.03em; }
+
+/* 오늘 뭐 하지 버튼류 / 주 버튼 */
+.go-btn, .share-all, .d-bar .cta:not(.ghost) { background: linear-gradient(180deg, #FF7A2E, #FF6B1A 55%, #F25F10); box-shadow: var(--shadow-brand); letter-spacing: -0.02em; }
+.go-btn:active, .d-bar .cta:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(255, 107, 26, .25); }
+
+/* 카드·목록 */
+.pcard .ph { border-radius: 20px; box-shadow: var(--shadow-m); }
+.pcard h3 { letter-spacing: -0.03em; margin-top: 10px; }
+.pcard .m { color: #9A948C; }
+.row .ph { border-radius: 18px; box-shadow: var(--shadow-s); }
+.row { border-bottom-color: var(--line); padding: 15px 16px; }
+.tag { background: rgba(27, 29, 34, .6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: 7px; }
+.badge { border-radius: 7px; font-weight: 700; }
+.row h3 { letter-spacing: -0.03em; }
+.ph img { transition: transform .35s ease; }
+
+/* 칩 */
+.chip { border-color: #E6E1DA; background: #fff; box-shadow: 0 1px 2px rgba(40, 28, 16, .04); }
+.chip.on { box-shadow: 0 3px 10px rgba(27, 29, 34, .22); }
+.quick button { background: #F3F0EC; }
+.seg { background: #F0EDE8; }
+
+/* 캘린더·지도·병원 카드화 */
+.cal { margin: 12px 12px; border-radius: 22px; box-shadow: var(--shadow-s); }
+.map-card { margin: 12px 12px 0; border-radius: 22px 22px 0 0; box-shadow: var(--shadow-s); }
+.map-sub { margin: 0 12px; }
+.map-go { margin: 0 12px 12px; border-radius: 0 0 22px 22px; box-shadow: var(--shadow-s); }
+.hosp-row { border-color: #EEEBE6; box-shadow: var(--shadow-s); border-radius: 16px; }
+.gu-list button { background: #F6F4F1; }
+
+/* 실내 대안 카드 */
+.rain-card { box-shadow: 0 8px 22px rgba(49, 130, 246, .12); }
+
+/* 상세 */
+.d-body { border-radius: 26px 26px 0 0; box-shadow: 0 -10px 28px rgba(40, 28, 16, .08); }
+.d-nav button { background: rgba(255, 255, 255, .82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0, 0, 0, .12); }
+.facts { background: linear-gradient(180deg, #FFF8F1, #FFF1E5); box-shadow: inset 0 0 0 1px #F6E3D2; }
+.fest-card { box-shadow: var(--shadow-s); border-color: #F3E4D6; border-radius: 18px; }
+.d-bar { background: rgba(255, 255, 255, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 -6px 20px rgba(40, 28, 16, .05); }
+.d-bar .sq { border-color: #E6E1DA; }
+.d-note { background: #F6F4F1; }
+
+#toast { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0, 0, 0, .22); }
+.sec { overflow: hidden; }
+.rail { scroll-padding-left: 16px; }
+.rain-card .rail { scroll-padding-left: 14px; }
+
+/* 오늘 뭐 하지? 버튼: 흰 카드 배경을 없애고 다른 카드와 좌우 끝을 맞춤 */
+.whatnow-sec { background: none; box-shadow: none; border-radius: 0; margin: 0 12px 12px; padding: 0; overflow: visible; }
+.whatnow { background: linear-gradient(180deg, #FFF6EE, #FFEBDC); border-color: #FFD3B5; box-shadow: 0 4px 14px rgba(255, 107, 26, .12); }
