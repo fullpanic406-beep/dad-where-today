@@ -48,6 +48,13 @@ jobs:
           test -n "$SEOUL_API_KEY" || { echo "::error::SEOUL_API_KEY 시크릿이 설정되지 않았습니다"; exit 1; }
           node src/ingest.js
 
+      # 서울 소아청소년과 병·의원(진료 시간·공휴일·야간). 실패하면 이전 배포 데이터를 그대로 쓴다.
+      - name: 소아과 병·의원 수집
+        continue-on-error: true
+        env:
+          HOSP_API_KEY: ${{ secrets.HOSP_API_KEY }}
+        run: node src/hospitals.js
+
       # 체험객·관람객 얼굴이 나온 사진(초상권)을 걸러 기본 이미지로 바꾼다. 검사 결과는 .cache 에 이어 쓰므로 새 이미지만 내려받는다.
       # 감지가 실패해도 수집 결과는 그대로 배포되지 않도록(사진이 그대로 나가지 않게) 이 단계가 실패하면 중단한다.
       - uses: actions/setup-python@v5

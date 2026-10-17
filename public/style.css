@@ -375,3 +375,27 @@ svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-widt
 .rain-card .sec-head svg.i { color: var(--blue); }
 .rain-card .rail { margin: 0; padding: 0 14px 2px; }
 .rain-card .rain-go { display: block; width: calc(100% - 28px); margin: 10px 14px 0; }
+
+/* 지도 탭: 소아청소년과 */
+.hosp { padding-top: 6px; }
+.hosp-row { background: #fff; border: 1px solid #E8EBEF; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
+.hosp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hosp-top b { font-size: 15.5px; color: var(--ink); }
+.hosp-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.hosp-badges:empty { display: none; }
+.badge.open-now { background: var(--green-soft); color: var(--green); flex: none; }
+.badge.hol { background: var(--brand-soft); color: var(--brand-dark); }
+.badge.night { background: #E9E7FB; color: #5B4BC4; }
+.badge.er { background: #FDE7E7; color: #D43A3A; }
+.hosp-meta { font-size: 12.5px; color: var(--sub); margin-top: 6px; }
+.hosp-note { font-size: 12px; color: var(--mute); margin-top: 3px; }
+.hosp-week { margin-top: 6px; font-size: 12.5px; color: var(--sub); }
+.hosp-week summary { cursor: pointer; font-weight: 600; }
+.hosp-week div { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 12px; margin-top: 6px; }
+.hosp-week span { display: flex; justify-content: space-between; }
+.hosp-week span.today { color: var(--ink); font-weight: 700; }
+.hosp-week i { font-style: normal; }
+.hosp-act { display: flex; gap: 8px; margin-top: 10px; }
+.hosp-act a { flex: 1; text-align: center; height: 38px; line-height: 38px; border-radius: 10px; background: #F6F7F9; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.hosp-act a:first-child { background: var(--blue-soft); color: var(--blue); }
+.hosp-gu { flex: none; align-self: flex-start; height: 32px; padding: 0 12px; border-radius: 16px; background: #F0F2F5; font-size: 12.5px; font-weight: 700; color: var(--sub); }

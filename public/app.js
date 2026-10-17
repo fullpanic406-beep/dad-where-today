@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces } from './data.js';
+import { km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals } from './data.js';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -28,6 +28,7 @@ const P = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
   sparkle: '<path d="M11 3l1.9 5.6L18.5 10.5l-5.6 1.9L11 18l-1.9-5.6L3.5 10.5l5.6-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
   gift: '<rect x="4" y="9.5" width="16" height="10.5" rx="2"/><path d="M12 9.5V20M3.5 9.5h17V7h-17zM12 7c-1.5-3.2-5-2.6-4.2-.8M12 7c1.5-3.2 5-2.6 4.2-.8"/>',
+  hospital: '<rect x="4" y="4.5" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/>',
   compass: '<circle cx="12" cy="12" r="8.5"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/>',
   smile: '<circle cx="12" cy="12" r="8.5"/><path d="M8.3 14c1.2 2.2 6.2 2.2 7.4 0"/><path d="M9 9.8h.01M15 9.8h.01" stroke-width="2.4"/>',
   flag: '<path d="M5.5 21V4M5.5 5h12l-2.2 4 2.2 4h-12"/>',
@@ -87,6 +88,7 @@ const S = {
   placeKind: '', placeRegion: '', placeSort: 'area', near: null, // near: 가까운 순 기준점(내 위치를 쓰면 { lat, lng, label })
   saved: new Set(store.get('saved', [])),
   cache: new Map(), meta: null, mapData: null, weather: null,
+  hosp: new Set(),   // 병원 탭 필터(now·hol·sun·sat·night 중 하나)
 };
 // 가까운 순 기준점: 내 위치를 켜지 않았다면 선택한 구의 중심
 const nearPoint = () => S.near ?? (() => { const c = S.mapData?.districts.find(x => x.name === S.gu); return c ? { lat: c.lat, lng: c.lng, label: `${S.gu} 중심` } : null; })();
@@ -452,6 +454,59 @@ async function renderMap() {
     <section class="sec"><div class="gu-list">${districts.map(d => `<button data-gu="${d.name}" class="${d.name === S.gu ? 'on' : ''}">${d.name}<small>${sum[d.name]?.n ?? 0}건</small></button>`).join('')}</div></section>`;
 }
 
+/* ---------- 지도에서 고른 구의 소아청소년과(진료 시간·공휴일·야간) ---------- */
+// 법정 공휴일(대체공휴일 포함). 해마다 갱신이 필요하다.
+const HOLIDAYS = new Set(['2026-01-01', '2026-02-16', '2026-02-17', '2026-02-18', '2026-03-01', '2026-03-02', '2026-05-05', '2026-05-24', '2026-05-25', '2026-06-03', '2026-06-06', '2026-08-15', '2026-08-17', '2026-09-24', '2026-09-25', '2026-09-26', '2026-10-03', '2026-10-05', '2026-10-09', '2026-12-25',
+  '2027-01-01', '2027-02-06', '2027-02-07', '2027-02-08', '2027-02-09', '2027-03-01', '2027-05-05', '2027-05-13', '2027-06-06', '2027-08-15', '2027-08-16', '2027-09-14', '2027-09-15', '2027-09-16', '2027-10-03', '2027-10-04', '2027-10-09', '2027-10-11', '2027-12-25']);
+const HDAY = ['월', '화', '수', '목', '금', '토', '일', '공휴일'];
+const HFILTERS = [['now', '지금 진료 중'], ['hol', '공휴일 진료'], ['night', '야간 진료'], ['sun', '일요일 진료'], ['sat', '토요일 진료']];
+const hhmm = v => `${Number(v.slice(0, 2))}:${v.slice(2)}`;
+const hRange = r => (r ? `${hhmm(r[0])}~${hhmm(r[1])}` : '휴진');
+const isNight = h => [0, 1, 2, 3, 4].some(i => h.h[i] && h.h[i][1] >= '2000');   // 평일 저녁 8시 이후까지
+function hospNow() {
+  const d = new Date(), t = pad(d.getHours()) + pad(d.getMinutes());
+  return { t, idx: HOLIDAYS.has(iso(d)) ? 7 : (d.getDay() + 6) % 7 };
+}
+const hospOpen = (h, now) => { const r = h.h[now.idx]; return !!r && now.t >= r[0] && now.t < r[1]; };
+const hospMatch = (h, now) => [...S.hosp].every(f => (f === 'now' ? hospOpen(h, now) : f === 'hol' ? !!h.h[7] : f === 'sun' ? !!h.h[6] : f === 'sat' ? !!h.h[5] : isNight(h)));
+function hospRow(h, now) {
+  const open = hospOpen(h, now), r = h.h[now.idx];
+  const state = open ? '<span class="badge open-now">지금 진료 중</span>' : r ? '<span class="badge">진료 시간 아님</span>' : `<span class="badge">오늘 ${now.idx === 7 ? '공휴일 ' : ''}휴진</span>`;
+  // 네이버 지도는 접속이 막히는 경우가 있어, 좌표가 있으면 카카오맵(핀 + 길찾기 버튼)으로 연다
+  const mapUrl = h.lat && h.lng ? `https://map.kakao.com/link/map/${encodeURIComponent(h.n)},${h.lat},${h.lng}` : `https://map.kakao.com/link/search/${encodeURIComponent('서울 ' + h.n)}`;
+  return `<div class="hosp-row">
+    <div class="hosp-top"><b>${esc(h.n)}</b>${state}</div>
+    <div class="hosp-badges">${h.er ? `<span class="badge er">${esc(h.er)}</span>` : ''}${h.h[7] ? '<span class="badge hol">공휴일 진료</span>' : ''}${h.h[6] ? '<span class="badge">일요일</span>' : ''}${isNight(h) ? '<span class="badge night">야간</span>' : ''}</div>
+    <div class="hosp-meta">${esc(h.a)} · 오늘 ${now.idx === 7 ? '(공휴일) ' : ''}${hRange(r)}</div>
+    ${h.e ? `<div class="hosp-note">${esc(h.e)}</div>` : ''}
+    <details class="hosp-week"><summary>요일별 진료 시간</summary><div>${HDAY.map((n, i) => `<span class="${i === now.idx ? 'today' : ''}"><i>${n}</i>${hRange(h.h[i])}</span>`).join('')}</div></details>
+    <div class="hosp-act">${h.t ? `<a href="tel:${esc(h.t.replace(/[^0-9+]/g, ''))}">전화 ${esc(h.t)}</a>` : ''}<a href="${mapUrl}" target="_blank" rel="noopener">지도·길찾기</a></div>
+  </div>`;
+}
+async function renderHosp() {
+  if (!S.mapData) S.mapData = await (await fetch('seoul-map.json')).json();
+  view.innerHTML = '<section class="sec hosp" id="hospSec"></section>';
+  await drawHosp();
+}
+async function drawHosp() {
+  if (!$('#hospSec')) return;
+  const gu = S.gu;
+  let data;
+  try { data = await loadHospitals(gu); } catch { if (S.gu === gu && $('#hospSec')) $('#hospSec').innerHTML = `<div class="sec-head"><div><h2>${esc(gu)} 소아청소년과</h2></div></div>${emptyHtml('병원 정보를 불러오지 못했어요', '잠시 뒤 다시 시도해 주세요.')}`; return; }
+  const box = $('#hospSec'); if (!box || S.gu !== gu) return;   // 그 사이 다른 구/탭으로 바뀜
+  const now = hospNow();
+  const all = data.items, list = all.filter(h => hospMatch(h, now))
+    .sort((a, b) => hospOpen(b, now) - hospOpen(a, now) || (!!b.er - !!a.er) || a.n.localeCompare(b.n, 'ko'));
+  const openN = all.filter(h => hospOpen(h, now)).length, shown = list.slice(0, 40);
+  box.innerHTML = `
+    <div class="sec-head"><div><h2>${esc(gu)} 소아청소년과</h2><p class="sec-sub">지금 진료 중 ${openN}곳 · 전체 ${all.length}곳 · 진료 시간표 기준이에요</p></div><button class="hosp-gu" data-gotab="map">지역 바꾸기</button></div>
+    <div class="chips" style="margin-bottom:8px">${HFILTERS.map(([k, l]) => `<button class="chip ${S.hosp.has(k) ? 'on' : ''}" data-hf="${k}">${l}</button>`).join('')}</div>
+    <div class="result-head"><h2>${S.hosp.size ? '조건에 맞는 곳' : '전체'}</h2><span>${list.length}곳</span></div>
+    ${shown.length ? shown.map(h => hospRow(h, now)).join('') : emptyHtml('조건에 맞는 병원이 없어요', '필터를 풀어 보세요.')}
+    ${list.length > shown.length ? `<p class="foot-note" style="padding-bottom:0">상위 ${shown.length}곳만 보여요. 필터로 좁혀 보세요.</p>` : ''}
+    <p class="foot-note" style="padding-bottom:0">출처: 국립중앙의료원 전국 병·의원 찾기 서비스 · 점심시간·접수마감·임시 휴진은 다를 수 있어요. 방문 전 전화로 꼭 확인하세요.</p>`;
+}
+
 /* ---------- 가볼 곳 (상시 운영 장소) ---------- */
 async function renderPlaces() {
   const near = nearPoint();
@@ -530,7 +585,7 @@ function openDetail(id, push = true) {
   const media = e.image
     ? `<div class="bg" style="background-image:url('${esc(e.image)}')"></div><img class="main" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">`
     : `<img class="cover" src="img/i-${catImg(e)}.jpg" alt="">`;
-  const map = e.place ? `https://map.naver.com/p/search/${encodeURIComponent((e.place.includes(e.gu) ? '' : e.gu + ' ') + e.place)}` : '';
+  const map = e.place ? `https://map.kakao.com/link/search/${encodeURIComponent((e.place.includes(e.gu) ? '' : e.gu + ' ') + e.place)}` : '';
   detail.innerHTML = `<div class="screen">
     <div class="d-scroll">
       <div class="d-media">${media}
@@ -579,7 +634,7 @@ function openPlace(id, push = true) {
   const p = S.cache.get(id); if (!p) return;
   const near = nearPoint(), dist = p.lat != null && near ? km(near, p) : null;
   const q = encodeURIComponent(`${p.name} ${p.addr}`);
-  const map = `https://map.naver.com/p/search/${q}`;
+  const map = p.lat != null && p.lng != null ? `https://map.kakao.com/link/map/${encodeURIComponent(p.name)},${p.lat},${p.lng}` : `https://map.kakao.com/link/search/${q}`;
   detail.innerHTML = `<div class="screen">
     <div class="d-scroll">
       <div class="d-media">${p.image ? `<div class="bg" style="background-image:url('${esc(p.image)}')"></div><img class="main" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">` : `<img class="cover" src="${placeImg(p)}" alt="">`}
@@ -705,7 +760,7 @@ async function share(id) {
 }
 
 /* ---------- 헤더·탭·렌더 ---------- */
-const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '지도'], ['saved', 'heart', '저장']];
+const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '지도'], ['hosp', 'hospital', '병원'], ['saved', 'heart', '저장']];
 function renderChrome() {
   $('#regionBtn').innerHTML = `${I('pin')}${esc(S.gu)}`;
   $('#searchBtn').innerHTML = I('search');
@@ -722,7 +777,7 @@ async function render(keepScroll = true) {
   renderChrome();
   if (!keepScroll && S.tab !== 'saved') view.innerHTML = skeleton(S.tab); // 탭·지역을 바꿀 때 빈 화면 대신 뼈대
   try {
-    await ({ home: renderHome, cal: renderCal, places: renderPlaces, map: renderMap, saved: renderSaved }[S.tab])();
+    await ({ home: renderHome, cal: renderCal, places: renderPlaces, map: renderMap, hosp: renderHosp, saved: renderSaved }[S.tab])();
   } catch (err) {
     console.error(err);
     view.innerHTML = `<section class="sec">${emptyHtml('불러오지 못했어요', '서버 연결을 확인하고 다시 시도해 주세요.')}</section>`;
@@ -814,6 +869,8 @@ document.addEventListener('click', e => {
   const f = t.closest('[data-f]'); if (f) { S[f.dataset.f] = !S[f.dataset.f]; return render(); }
   const cat = t.closest('[data-cat]'); if (cat) { S.cat = cat.dataset.cat; return render(); }
 
+  const hf = t.closest('[data-hf]');
+  if (hf) { const k = hf.dataset.hf, had = S.hosp.has(k); S.hosp.clear(); if (!had) S.hosp.add(k); return drawHosp(); }   // 한 번에 하나만(같은 칩을 다시 누르면 전체)
   const gu = t.closest('[data-gu]');
   if (gu) { // 지도에서 지역을 고르면 가까운 순 기준도 그 지역으로 바뀐다(이전에 '내 위치로'를 눌렀어도 해제)
     const wasGps = !!S.near; S.gu = gu.dataset.gu; S.near = null; store.set('gu', S.gu);
@@ -872,7 +929,7 @@ function startSplash() {
   const [meta, map] = await Promise.all([api('/api/meta').catch(() => null), fetch('seoul-map.json').then(r => r.json()).catch(() => null), loadWeather()]);
   S.meta = meta; S.mapData = map;
   const qs = new URLSearchParams(location.search);
-  if (['home', 'cal', 'places', 'map', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
+  if (['home', 'cal', 'places', 'map', 'hosp', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
   if (qs.get('kind') in KIND) S.placeKind = qs.get('kind');
   if (['서울', '경기'].includes(qs.get('region'))) S.placeRegion = qs.get('region');
   await render(false);

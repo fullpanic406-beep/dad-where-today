@@ -28,6 +28,7 @@ GitHub Actions (매주 월·화 10:00 KST)
 | `public/data.js` | 구별 JSON 로더, 필터·캘린더·지도 집계 |
 | `public/app.js` | 모바일 UI (홈·캘린더·구 지도·저장, 상세·검색 전체 화면) |
 | `scripts/build-map.js` | 구 경계 GeoJSON → `public/seoul-map.json` |
+| `src/hospitals.js` | 서울 소아과 병·의원(국립중앙의료원, 키 `HOSP_API_KEY`) → `public/data/hospitals/<구>.json` (병원 탭) |
 | `scripts/set-data-base.js` | 앱 빌드용: 앱이 읽을 데이터 주소를 `public/config.js` 에 기록 |
 | `capacitor.config.json`, `android/` | 안드로이드 앱 프로젝트(Capacitor) |
 | `.github/workflows/build-android.yml` | 클라우드에서 테스트용 APK 빌드 |

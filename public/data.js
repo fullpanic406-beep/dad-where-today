@@ -114,3 +114,6 @@ export async function queryPlaces(p) {
   list.sort((a, b) => (p.near ? (a.dist ?? 1e9) - (b.dist ?? 1e9) : 0) || a.name.localeCompare(b.name, 'ko'));
   return { places: list.slice(0, p.limit || 200), total: list.length };
 }
+
+// 구별 소아청소년과 병·의원(src/hospitals.js 가 만든 data/hospitals/<구>.json)
+export const loadHospitals = gu => once('hosp:' + gu, () => getJson(`data/hospitals/${encodeURIComponent(gu)}.json`));
