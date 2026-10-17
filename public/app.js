@@ -327,6 +327,9 @@ async function renderHome() {
   // (예약이 끝난 행사는 제외, 최대 5개)
   const closed = e => e.status && e.status !== '접수중' && e.status !== '안내중';
   const spanDays = e => (Date.parse(e.end_date) - Date.parse(e.start_date)) / 864e5;
+  // 홈 맨 위 배너: 이번 주말에 열리는 축제(예약 마감 제외, 짧은 행사부터)
+  const wkFest = fest.events.filter(e => !closed(e) && e.start_date <= w1 && e.end_date >= w0)
+    .sort((x, y) => spanDays(x) - spanDays(y) || x.start_date.localeCompare(y.start_date) || koSort(x.title, y.title));
   const nearGroup = e => (e.start_date <= w1 && e.end_date >= w0 && spanDays(e) <= 7 ? 0 : e.start_date > w1 ? 1 : 2);
   const pool = [...kc.events.filter(e => e.dow), ...fest.events, ...wk.events, ...soon.events, ...td.events];
   const seenPick = new Set();
@@ -342,21 +345,24 @@ async function renderHome() {
   view.innerHTML = `
     <section class="hero-car">
       <div class="car-track" id="carTrack">
-        <div class="car-slide hero">
+        <div class="car-slide hero"${wkFest.length ? ' data-go="wkfest"' : ''}>
           <img class="hero-img" src="img/hero.jpg" alt="">
           ${wxPill(TODAY)}
           <div class="hero-text">
-            <span class="eyebrow">${esc(S.gu)}</span>
-            <h2>우리 가족의 주말을<br>지켜주는 히어로</h2>
-            <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>
+            <span class="eyebrow">${esc(S.gu)}${wkFest.length ? ' · 이번 주말' : ''}</span>
+            ${wkFest.length
+              ? `<h2>이번 주말 축제<br>${wkFest.length}곳</h2>
+            <p class="hero-fest">${esc(wkFest[0].title)}${wkFest.length > 1 ? ` 외 ${wkFest.length - 1}곳` : ''}</p>`
+              : `<h2>우리 가족의 주말을<br>지켜주는 히어로</h2>
+            <p>오늘 ${td.total}건 · 이번 주말 ${wk.total}건${kc.total ? ` · 키즈카페 ${kc.total}곳` : ''}</p>`}
           </div>
         </div>
         ${pinned.map(pickPlaceSlide).join('')}${picks.map(pickSlide).join('')}
       </div>
       ${picks.length + pinned.length ? `<div class="car-ctl"><button class="car-btn" data-car="-1" aria-label="이전 배너">${I('back')}</button><div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div><button class="car-btn" data-car="1" aria-label="다음 배너">${I('chevR')}</button></div>` : ''}
     </section>
-    <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${rainDays.length ? rainCard(rainDays, indoor, kc) : ''}
+    <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${section('이번 주말 가볼 만한 곳', { events: [...wk.events].sort((a, b) => byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}구·동 순서로 모았어요`, 20)}
     ${pl.places.length ? `<section class="sec">
       <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 12곳 · 구·동 순서</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
@@ -751,6 +757,7 @@ function go(kind) {
   else if (kind === 'weekend') setRange(...weekendOf(TODAY));
   else if (kind === 'free') { S.free = true; setRange(TODAY, addDays(TODAY, 6)); }
   else if (kind === 'kids') { S.family = true; setRange(...weekendOf(TODAY)); }
+  else if (kind === 'wkfest') { S.cat = 'festival'; setRange(...weekendOf(TODAY)); }
   else if (kind === 'festival') { S.cat = 'festival'; setRange(TODAY, addDays(TODAY, 13)); }
   else if (kind === 'kidscafe') { S.cat = 'kidscafe'; setRange(TODAY, weekendOf(TODAY)[1]); }
   setTab('cal');
