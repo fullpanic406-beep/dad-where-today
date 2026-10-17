@@ -148,7 +148,7 @@ function rainCard(days, indoor, kc) {
   return `<section class="sec rain-card">
     <div class="sec-head"><div><h2>${I('rain')} ${label}은 실내가 좋아요</h2><p class="sec-sub">${esc(wxShort(w))} · 비 와도 아이와 놀 수 있는 곳이에요</p></div></div>
     ${indoor.length ? `<div class="rail">${indoor.map(placeCard).join('')}</div>` : ''}
-    ${n ? `<button class="go-btn rain-go" data-go="kidscafe">키즈카페 ${n}곳 보기</button>` : ''}
+    ${n ? `<button class="go-btn rain-go" data-go="kidscafe">실내 가볼 만한 곳</button>` : ''}
   </section>`;
 }
 const rainSoon = days => days.some(d => ['rain', 'chance'].includes(S.weather?.[d]?.status));
