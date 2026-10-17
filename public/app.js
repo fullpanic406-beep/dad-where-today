@@ -599,7 +599,23 @@ function openPlace(id, push = true) {
 }
 function hideScreens() { detail.hidden = true; searchEl.hidden = true; }
 function closeScreen() { if (history.state?.screen) history.back(); else hideScreens(); }
-window.addEventListener('popstate', () => { if (!detail.hidden && !searchEl.hidden) detail.hidden = true; else hideScreens(); });
+window.addEventListener('popstate', () => {
+  if (!detail.hidden && !searchEl.hidden) { detail.hidden = true; return; }
+  if (!detail.hidden || !searchEl.hidden) return hideScreens();
+  if (tabStack.length) setTabBack(tabStack.pop());
+});
+function setTabBack(t) { S.tab = t; render(false); }   // 이전 탭으로 복귀(스택·기록은 건드리지 않는다)
+
+/* ---------- 스마트폰 뒤로가기(안드로이드 앱) ---------- */
+// 열린 화면 닫기 → 이전 탭 → 홈에서 2번 눌러야 종료
+let exitArmed = false;
+window.Capacitor?.Plugins?.App?.addListener('backButton', () => {
+  if (!detail.hidden || !searchEl.hidden) return closeScreen();
+  if (tabStack.length) return history.back();
+  if (exitArmed) return window.Capacitor.Plugins.App.exitApp();
+  exitArmed = true; toast('한 번 더 누르면 앱이 종료돼요');
+  setTimeout(() => (exitArmed = false), 2000);
+});
 
 /* ---------- 검색 ---------- */
 function openSearch(q = '') {
@@ -698,7 +714,9 @@ async function render(keepScroll = true) {
   view.scrollTop = y;
 }
 // 탭을 바꾸면 화면이 옆으로 밀리며 넘어간다(오른쪽 탭이면 왼쪽으로, 왼쪽 탭이면 오른쪽으로)
+const tabStack = [];   // 뒤로가기로 돌아갈 이전 탭들
 function setTab(t) {
+  if (t !== S.tab) { tabStack.push(S.tab); history.pushState({ tab: true }, ''); }
   const from = TABS.findIndex(x => x[0] === S.tab), to = TABS.findIndex(x => x[0] === t);
   if (t === S.tab || from < 0 || to < 0 || matchMedia('(prefers-reduced-motion: reduce)').matches) { S.tab = t; return render(false); }
   const dir = to > from ? 1 : -1, app = $('#app'), r = view.getBoundingClientRect(), ar = app.getBoundingClientRect();

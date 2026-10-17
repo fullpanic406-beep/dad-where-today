@@ -125,6 +125,11 @@ async function main() {
   // 직접 확인해 적어 둔 보강 내용(data/enrich.json)을 덧씌운다
   applyEnrich(events, descs, path.join(ROOT, 'data', 'enrich.json'));
 
+  // 체험객·관람객 얼굴이 나온 사진(초상권)은 data/image-exclude.json 의 주소 목록으로 걸러 기본 이미지로 대체한다
+  const excludeImg = existsSync(path.join(ROOT, 'data', 'image-exclude.json')) ? new Set(JSON.parse(readFileSync(path.join(ROOT, 'data', 'image-exclude.json'), 'utf8'))) : new Set();
+  let imgDropped = 0;
+  for (const e of events) if (e.image && excludeImg.has(e.image)) { e.image = ''; e.image_license = ''; imgDropped++; }
+
   // 구별로 나눠 저장
   rmSync(path.join(OUT, 'gu'), { recursive: true, force: true });
   rmSync(path.join(OUT, 'desc'), { recursive: true, force: true });
@@ -186,6 +191,8 @@ async function main() {
     if (p.dong) placeDong++;
   }
   console.log(`[ingest] 동 정보: 장소 ${places.length}곳 중 ${placeDong}곳`);
+  for (const p of places) if (p.image && excludeImg.has(p.image)) { p.image = ''; p.imageLicense = ''; imgDropped++; }
+  console.log(`[ingest] 얼굴이 나온 사진 제외: ${imgDropped}건`);
   places.sort((a, b) => a.region.localeCompare(b.region, 'ko') || a.gu.localeCompare(b.gu, 'ko') || a.dong.localeCompare(b.dong, 'ko') || a.name.localeCompare(b.name, 'ko'));
   write(path.join(OUT, 'places.json'), { meta: { generatedAt: new Date().toISOString(), total: places.length, counts: placeCounts }, places });
 
