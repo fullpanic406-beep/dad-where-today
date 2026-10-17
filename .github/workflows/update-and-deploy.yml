@@ -48,6 +48,19 @@ jobs:
           test -n "$SEOUL_API_KEY" || { echo "::error::SEOUL_API_KEY 시크릿이 설정되지 않았습니다"; exit 1; }
           node src/ingest.js
 
+      # 체험객·관람객 얼굴이 나온 사진(초상권)을 걸러 기본 이미지로 바꾼다. 검사 결과는 .cache 에 이어 쓰므로 새 이미지만 내려받는다.
+      # 감지가 실패해도 수집 결과는 그대로 배포되지 않도록(사진이 그대로 나가지 않게) 이 단계가 실패하면 중단한다.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 얼굴이 나온 사진 거르기
+        run: |
+          pip install --quiet opencv-python-headless numpy
+          mkdir -p .cache
+          test -f .cache/yunet.onnx || curl -fsSL -o .cache/yunet.onnx https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
+          python scripts/filter-images.py
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
