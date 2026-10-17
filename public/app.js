@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals } from './data.js';
+import { km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -358,6 +358,7 @@ async function renderHome() {
       ${picks.length + pinned.length ? `<div class="car-ctl"><button class="car-btn" data-car="-1" aria-label="이전 배너">${I('back')}</button><div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div><button class="car-btn" data-car="1" aria-label="다음 배너">${I('chevR')}</button></div>` : ''}
     </section>
     <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
+    <section class="sec whatnow-sec"><button class="whatnow" data-whatnow>${I('sparkle')}<span>오늘 뭐 하지? 하나 골라줘</span></button></section>
     ${section('이번 주말 축제·행사', { events: [...wk.events].sort((a, b) => (a.category === 'festival' ? 0 : 1) - (b.category === 'festival' ? 0 : 1) || byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}축제를 먼저, 구·동 순서로 모았어요`, 20)}
     ${rainDays.length ? rainCard(rainDays, indoor, kc) : ''}
     ${pl.places.length ? `<section class="sec">
@@ -668,6 +669,84 @@ function openPlace(id, push = true) {
   detail.hidden = false;
   if (push) history.pushState({ screen: 'detail' }, '');
 }
+/* ---------- 오늘 뭐 하지? — 오늘 날씨·요일만 보고 하나를 골라 준다(아이 나이는 반영하지 않음) ---------- */
+const pickSeen = new Set();   // 다시 뽑을 때 같은 곳이 연달아 나오지 않게
+const RAIN_OK = new Set(['kidscafe', 'exhibit', 'edu', 'show']);   // 비 오는 날엔 실내에서 할 법한 행사만
+async function pickToday() {
+  const wx = S.weather?.[TODAY];
+  const rain = wx?.status === 'rain', chance = wx?.status === 'chance';
+  const extreme = !wx ? null : wx.max >= 32 ? 'hot' : (wx.max <= 2 || wx.min <= -8) ? 'cold' : null;   // 폭염·한파면 실내를 더 권한다
+  const [evRes, plRes] = await Promise.all([
+    api('/api/events', { gu: S.gu, from: TODAY, to: TODAY }),
+    api('/api/places', { near: nearPoint(), limit: 80 }),
+  ]);
+  const cands = [];
+  const climate = (indoorOk, base, onRain) => rain ? onRain : extreme ? (indoorOk ? '날씨가 ' + (extreme === 'hot' ? '무더워서' : '추워서') + ' 실내에서 즐길 수 있는 곳으로 골랐어요' : base) : base;
+  for (const e of evRes.events) {
+    if (e.status && e.status !== '접수중' && e.status !== '안내중') continue;   // 마감된 예약 행사 제외
+    const text = `${e.title} ${e.place ?? ''}`;
+    if (!inSeason(text)) continue;
+    const indoorOk = RAIN_OK.has(e.category);
+    if (rain && !indoorOk) continue;                                             // 비 오는 날엔 실내에서 할 법한 행사만
+    let w = (e.category === 'festival' ? 3 : 1) * (e.family ? 2 : 1) * (e.is_free === 1 ? 1.5 : 1) * (e.category === 'kidscafe' ? 1.5 : 1);
+    if (extreme) w *= indoorOk ? 2 : 0.3;
+    else if (chance && indoorOk) w *= 1.3;
+    const seasonal = isSeasonal(text);
+    if (seasonal) w *= 2;
+    const base = seasonal ? '지금이 제철이에요' : e.category === 'festival' ? '오늘 열리는 축제예요' : e.category === 'kidscafe' ? '날씨 걱정 없이 놀 수 있는 키즈카페예요' : e.is_free === 1 ? '오늘 무료로 즐길 수 있어요' : e.family ? '아이와 함께 가기 좋은 행사예요' : '오늘 열리는 행사예요';
+    cands.push({ type: 'event', item: e, w, reason: climate(indoorOk, base, '비 예보가 있어서 실내에서 즐길 수 있는 곳으로 골랐어요') });
+  }
+  for (const pl of plRes.places) {
+    const indoorOk = INDOOR.has(pl.kind);
+    if (rain && !indoorOk) continue;
+    let w = (rain ? 2.5 : 1.5) * (pl.dist != null && pl.dist < 5 ? 1.5 : 1);
+    if (extreme) w *= indoorOk ? 2.5 : 0.4;
+    else if (chance && indoorOk) w *= 1.3;
+    const seasonal = isSeasonal(pl.name);   // 철 아닌 장소는 목록 단계에서 이미 빠져 있다
+    if (seasonal) w *= 2;
+    cands.push({ type: 'place', item: pl, w, reason: climate(indoorOk, seasonal ? '지금이 제철이에요' : '아이와 함께 가기 좋은, 가까운 곳이에요', '비 오는 날 가기 좋은 실내 장소예요') });
+  }
+  let pool = cands.filter(c => !pickSeen.has(c.item.id));
+  if (!pool.length) { pickSeen.clear(); pool = cands; }
+  if (!pool.length) return null;
+  let r = Math.random() * pool.reduce((a, c) => a + c.w, 0), pick = pool[pool.length - 1];
+  for (const c of pool) { if ((r -= c.w) <= 0) { pick = c; break; } }
+  pickSeen.add(pick.item.id);
+  return pick;
+}
+async function showWhatNow(push) {
+  let pick;
+  try { pick = await pickToday(); } catch { pick = null; }
+  if (!pick) {
+    detail.innerHTML = `<div class="screen"><div class="d-scroll"><div class="d-media"><img class="cover" src="img/i-weekend.jpg" alt=""><div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button></div></div>
+      <div class="d-body"><h2>오늘은 딱 맞는 곳을 못 찾았어요</h2><p class="d-desc">${esc(S.gu)}에서 오늘 갈 만한 곳이 없어요. 지역을 바꾸거나 이번 주말 행사를 둘러보세요.</p></div></div></div>`;
+  } else {
+    const { type, item: x, reason } = pick;
+    S.cache.set(x.id, x);
+    const media = type === 'event'
+      ? (x.image ? `<div class="bg" style="background-image:url('${esc(x.image)}')"></div><img class="main" src="${esc(x.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : `<img class="cover" src="img/i-${catImg(x)}.jpg" alt="">`)
+      : (x.image ? `<div class="bg" style="background-image:url('${esc(x.image)}')"></div><img class="main" src="${esc(x.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : `<img class="cover" src="${placeImg(x)}" alt="">`);
+    const title = type === 'event' ? x.title : x.name;
+    const meta = type === 'event' ? `${whenText(x)}${x.time ? ' · ' + esc(x.time) : ''}<br>${esc(where(x))}` : `${esc(x.addr || '')}${x.hours ? '<br>' + esc(x.hours) : ''}`;
+    detail.innerHTML = `<div class="screen">
+      <div class="d-scroll">
+        <div class="d-media">${media}<div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button></div></div>
+        <div class="d-body">
+          <div class="pick-why">${I('sparkle')}<span>오늘의 추천</span></div>
+          <h2>${esc(title)}</h2>
+          <p class="pick-reason">${esc(reason)}</p>
+          <div class="badges">${type === 'event' ? rowBadges(x) : placeBadges(x)}</div>
+          <p class="pick-meta">${meta}</p>
+        </div>
+      </div>
+      <div class="d-bar">
+        <button class="cta ghost" data-whatnow-again>다른 곳 골라줘</button>
+        <button class="cta" ${type === 'event' ? `data-id="${esc(x.id)}"` : `data-place="${esc(x.id)}"`}>자세히 보기</button>
+      </div></div>`;
+  }
+  detail.hidden = false;
+  if (push) history.pushState({ screen: 'detail' }, '');
+}
 function hideScreens() { detail.hidden = true; searchEl.hidden = true; }
 function closeScreen() { if (history.state?.screen) history.back(); else hideScreens(); }
 window.addEventListener('popstate', () => {
@@ -831,6 +910,8 @@ document.addEventListener('click', e => {
   }
   const dot = t.closest('[data-slide]');
   if (dot) { carHold?.(); const tr = $('#carTrack'); tr.scrollTo({ left: Number(dot.dataset.slide) * tr.clientWidth, behavior: 'smooth' }); return; }
+  if (t.closest('[data-whatnow]')) return showWhatNow(true);
+  if (t.closest('[data-whatnow-again]')) return showWhatNow(false);
   const pl = t.closest('[data-place]'); if (pl) return openPlace(pl.dataset.place);
   const tg = t.closest('[data-tab-go]'); if (tg) return setTab(tg.dataset.tabGo);
   const ps = t.closest('[data-psort]'); if (ps) { S.placeSort = ps.dataset.psort; return render(); }

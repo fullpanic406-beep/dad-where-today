@@ -105,10 +105,17 @@ export const km = (a, b) => { // 두 지점(위도·경도) 사이 거리(km)
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
   return 12742 * Math.asin(Math.sqrt(h));
 };
+// 계절 한정 장소·행사: 철이 아니면 추천·목록에서 뺀다(눈썰매장은 겨울에만, 물놀이는 여름에만 등)
+const SEASONS = [[/눈썰매|스키|스노보드|빙어|눈꽃|얼음낚시|눈사람|겨울/, [12, 1, 2]], [/물놀이|워터파크|워터슬라이드|물총|해수욕|계곡|래프팅|여름/, [6, 7, 8, 9]],
+  [/갯벌/, [4, 5, 6, 7, 8, 9, 10]], [/딸기/, [12, 1, 2, 3, 4, 5]], [/벚꽃/, [3, 4]], [/단풍/, [10, 11]], [/억새|코스모스/, [9, 10, 11]],
+  [/크리스마스|성탄/, [11, 12]], [/할로윈|핼러윈/, [10]], [/김장/, [11, 12]]];
+export const inSeason = (text, month = new Date().getMonth() + 1) => SEASONS.every(([re, ms]) => !re.test(text) || ms.includes(month));
+export const isSeasonal = text => SEASONS.some(([re]) => re.test(text));   // 철이 정해진 이름인가(inSeason 과 같이 쓰면 '지금이 제철')
+
 export async function queryPlaces(p) {
   const { places } = await loadPlaces();
   if (p.ids) { const want = new Set(String(p.ids).split(',').filter(Boolean)); return { places: places.filter(x => want.has(x.id)) }; }
-  let list = places.filter(x => (!p.region || x.region === p.region) && (!p.kind || x.kind === p.kind) && (!p.free || x.free === 1)
+  let list = places.filter(x => p.q || inSeason(x.name)).filter(x => (!p.region || x.region === p.region) && (!p.kind || x.kind === p.kind) && (!p.free || x.free === 1)
     && (!p.q || x.name.toLowerCase().includes(p.q.toLowerCase()) || x.addr.toLowerCase().includes(p.q.toLowerCase())));
   list = list.map(x => ({ ...x, dist: p.near && x.lat != null ? km(p.near, x) : null }));
   list.sort((a, b) => (p.near ? (a.dist ?? 1e9) - (b.dist ?? 1e9) : 0) || a.name.localeCompare(b.name, 'ko'));
