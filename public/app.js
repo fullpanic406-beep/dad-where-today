@@ -355,9 +355,9 @@ async function renderHome() {
       </div>
       ${picks.length + pinned.length ? `<div class="car-ctl"><button class="car-btn" data-car="-1" aria-label="이전 배너">${I('back')}</button><div class="car-dots" id="carDots">${['', ...pinned, ...picks].map((_, i) => `<i data-slide="${i}" class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div><button class="car-btn" data-car="1" aria-label="다음 배너">${I('chevR')}</button></div>` : ''}
     </section>
+    <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${section('이번 주말 축제·행사', { events: [...wk.events].sort((a, b) => (a.category === 'festival' ? 0 : 1) - (b.category === 'festival' ? 0 : 1) || byArea(a, b) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title)) }, 'weekend', `${weekendWx(w0, w1) ? weekendWx(w0, w1) + ' · ' : ''}축제를 먼저, 구·동 순서로 모았어요`, 20)}
     ${rainDays.length ? rainCard(rainDays, indoor, kc) : ''}
-    <section class="sec"><div class="shortcuts">${sc.map(([k, , t]) => `<button data-go="${k}"><span class="tile"><img src="img/i-${k}.jpg" alt=""></span>${t}</button>`).join('')}</div></section>
     ${pl.places.length ? `<section class="sec">
       <div class="sec-head"><div><h2>아이와 가볼 만한 곳</h2><p class="sec-sub">${esc(near?.label ?? '')}에서 가까운 12곳 · 구·동 순서</p></div><button class="more" data-tab-go="places">더보기${I('chevR')}</button></div>
       <div class="rail">${pl.places.map(placeCard).join('')}</div></section>` : ''}
