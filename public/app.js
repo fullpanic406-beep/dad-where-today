@@ -154,7 +154,7 @@ const rowBadges = e => `${e.dow_label ? `<span class="badge wk">${e.dow_label} �
 function rowHtml(e) {
   S.cache.set(e.id, e);
   return `<div class="row" data-id="${esc(e.id)}" role="button" tabindex="0">
-    <div class="ph">${thumb(e)}</div>
+    <div class="ph">${thumb(e)}${e.category === 'festival' ? '<span class="fest-star" title="축제" aria-label="축제">★</span>' : ''}</div>
     <div class="body">
       <div class="badges">${rowBadges(e)}</div>
       <h3>${esc(e.title)}</h3>
