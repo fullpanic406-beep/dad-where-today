@@ -43,6 +43,9 @@ const P = {
   snow: `<path d="${CLOUD_UP}"/><path d="M8.5 19h.01M12.5 20.5h.01M16.5 19h.01" stroke-width="2.6"/>`,
   bolt: `<path d="${CLOUD_UP}"/><path d="M12.8 14l-2.3 3.5h3L11.7 21"/>`,
   refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
+  steth: '<path d="M6 3v5a4 4 0 0 0 8 0V3"/><path d="M10 12v2.5a4.5 4.5 0 0 0 9 0V13"/><circle cx="19" cy="11" r="2"/>',
+  medkit: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/>',
+  moon: '<path d="M19 14.5A7.5 7.5 0 1 1 9.5 5a6 6 0 0 0 9.5 9.5z"/>',
 };
 const I = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 
@@ -489,8 +492,8 @@ function hospRow(h, now) {
   // 네이버 지도는 접속이 막히는 경우가 있어, 좌표가 있으면 카카오맵(핀 + 길찾기 버튼)으로 연다
   const mapUrl = h.lat && h.lng ? `https://map.kakao.com/link/map/${encodeURIComponent(h.n)},${h.lat},${h.lng}` : `https://map.kakao.com/link/search/${encodeURIComponent('서울 ' + h.n)}`;
   return `<div class="hosp-row ${open ? 'is-open' : ''}">
-    <div class="hosp-top"><b>${esc(h.n)}</b>${state}</div>
-    <div class="hosp-badges">${h.er ? `<span class="badge er">${esc(h.er)}</span>` : ''}${h.h[7] ? '<span class="badge hol">공휴일 진료</span>' : ''}${h.h[6] ? '<span class="badge">일요일</span>' : ''}${isNight(h) ? '<span class="badge night">야간</span>' : ''}</div>
+    <div class="hosp-top"><b>${I('steth')}${esc(h.n)}</b>${state}</div>
+    <div class="hosp-badges">${h.er ? `<span class="badge er">${I('medkit')}${esc(h.er)}</span>` : ''}${h.h[7] ? `<span class="badge hol">${I('calendar')}공휴일 진료</span>` : ''}${h.h[6] ? '<span class="badge">일요일</span>' : ''}${isNight(h) ? `<span class="badge night">${I('moon')}야간</span>` : ''}</div>
     <div class="hosp-meta">${esc(h.a)} · 오늘 ${now.idx === 7 ? '(공휴일) ' : ''}${hRange(r)}</div>
     ${h.e ? `<div class="hosp-note">${esc(h.e)}</div>` : ''}
     <details class="hosp-week"><summary>요일별 진료 시간</summary><div>${HDAY.map((n, i) => `<span class="${i === now.idx ? 'today' : ''}"><i>${n}</i>${hRange(h.h[i])}</span>`).join('')}</div></details>
@@ -599,7 +602,7 @@ function festCard(t) {
 function openDetail(id, push = true) {
   const e = S.cache.get(id); if (!e) return;
   const media = e.image
-    ? `<div class="bg" style="background-image:url('${esc(e.image)}')"></div><img class="main" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">`
+    ? `<div class="bg" style="background-image:url('${esc(e.image)}')"></div><img class="main" src="${esc(e.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9); this.parentNode.classList.toggle('photo', this.naturalWidth / this.naturalHeight >= 1.2)" onerror="this.remove()">`
     : `<img class="cover" src="img/i-${catImg(e)}.jpg" alt="">`;
   const map = e.place ? `https://map.kakao.com/link/search/${encodeURIComponent((e.place.includes(e.gu) ? '' : e.gu + ' ') + e.place)}` : '';
   detail.innerHTML = `<div class="screen">
@@ -653,7 +656,7 @@ function openPlace(id, push = true) {
   const map = p.lat != null && p.lng != null ? `https://map.kakao.com/link/map/${encodeURIComponent(p.name)},${p.lat},${p.lng}` : `https://map.kakao.com/link/search/${q}`;
   detail.innerHTML = `<div class="screen">
     <div class="d-scroll">
-      <div class="d-media">${p.image ? `<div class="bg" style="background-image:url('${esc(p.image)}')"></div><img class="main" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9)" onerror="this.remove()">` : `<img class="cover" src="${placeImg(p)}" alt="">`}
+      <div class="d-media">${p.image ? `<div class="bg" style="background-image:url('${esc(p.image)}')"></div><img class="main" src="${esc(p.image)}" alt="" referrerpolicy="no-referrer" onload="this.parentNode.classList.toggle('wide', this.naturalWidth / this.naturalHeight >= 1.9); this.parentNode.classList.toggle('photo', this.naturalWidth / this.naturalHeight >= 1.2)" onerror="this.remove()">` : `<img class="cover" src="${placeImg(p)}" alt="">`}
         <div class="d-nav"><button data-close aria-label="뒤로">${I('back')}</button></div>
       </div>
       <div class="d-body">

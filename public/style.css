@@ -569,3 +569,42 @@ input, textarea, .d-desc, .fest-text, .fest-list, .info span, .hosp-meta, .hosp-
 .badge.night::before { content: '🌙'; margin-right: 3px; } .badge.hol::before { content: '📅'; margin-right: 3px; } .badge.er::before { content: '🚑'; margin-right: 3px; }
 .hosp-top b::before { content: '🩺'; margin-right: 6px; }
 @media (prefers-reduced-motion: reduce) { .badge.open-now::before { animation: none; } }
+
+/* ---- 고급화(2026-10-19 시안 중 홈·가볼 곳·병원·상세 적용) ---- */
+/* 홈·공통: 주 버튼과 하단 탭 표시는 먹색으로 차분하게, 탭 헤더 그라데이션은 한 톤 낮춤 */
+.tabs button.on { color: var(--ink); }
+.tabs button.on::before { background: var(--ink); }
+.tabs button.on svg.i { fill: none; }
+.go-btn, .share-all, .d-bar .cta:not(.ghost) { background: var(--ink); box-shadow: 0 6px 16px rgba(27, 29, 34, .18); }
+.go-btn:active, .d-bar .cta:active { box-shadow: 0 3px 8px rgba(27, 29, 34, .2); }
+.tabhead { background: linear-gradient(120deg, #8E78E0, #A795EC 55%, #C9BCF3); }
+/* 홈 카드·가볼 곳 카드: 사진 모서리·테두리·아래 그라데이션 통일, 사진은 서서히 나타남 */
+.pcard .ph, .pgrid .list .row .ph { border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .04), 0 1px 3px rgba(30, 24, 50, .06); }
+.pgrid .list .row .ph { border-radius: 0; }
+.pcard .ph::after, .pgrid .list .row .ph::after { content: ''; position: absolute; inset: auto 0 0 0; height: 40%; background: linear-gradient(transparent, rgba(20, 16, 30, .18)); pointer-events: none; }
+.pcard .ph img.ev, .pgrid .ph img.ev { animation: fadein .4s ease both; }
+@keyframes fadein { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pcard .ph img.ev, .pgrid .ph img.ev { animation: none; } }
+
+/* 병원: 이모지 → 선 아이콘, 색은 채도 낮게, 왼쪽 띠는 얇은 막대로 */
+.hosp-top b::before, .badge.night::before, .badge.hol::before, .badge.er::before { content: none; }
+.hosp-top b svg.i { width: 16px; height: 16px; color: var(--brand); vertical-align: -3px; margin-right: 5px; }
+.hosp-badges .badge svg.i { width: 12px; height: 12px; stroke-width: 2; margin-right: 3px; }
+.hosp-row.is-open { background: #fff; }
+.hosp-row::before { width: 3px; top: 14px; bottom: 14px; border-radius: 0 3px 3px 0; }
+.hosp-row.is-open::before { background: #5E9883; }
+.badge.open-now { background: #ECF4F0; color: #3F7C66; height: 26px; }
+.badge.open-now::before { background: #4FA38A; box-shadow: 0 0 0 3px rgba(79, 163, 138, .2); }
+.badge.er { background: #F7EEEE; color: #B05555; }
+.badge.night { background: #EEF0F6; color: #4E5A86; }
+.badge.hol { background: #F1EDFD; color: #6A4FCC; }
+
+/* 상세: 가로 사진은 화면 끝까지 꽉 채움(세로 포스터는 잘리지 않게 기존처럼 가운데에), 본문 카드가 둥글게 겹쳐 올라옴 */
+.d-media { height: 340px; }
+.d-media.photo .bg { display: none; }
+.d-media.photo img.main { left: 0; top: 0; transform: none; width: 100%; height: 100%; max-width: none; border-radius: 0; box-shadow: none; object-fit: cover; background: none; }
+.d-media.wide { height: 250px; }
+.d-media::after { content: ''; position: absolute; inset: auto 0 0 0; height: 45%; background: linear-gradient(transparent, rgba(15, 12, 25, .3)); pointer-events: none; }
+.d-body { margin-top: -28px; border-radius: 28px 28px 0 0; }
+.d-body h2 { font-size: 23px; }
+.info { border: 0; background: #F7F6FA; border-radius: 16px; padding: 16px; }
