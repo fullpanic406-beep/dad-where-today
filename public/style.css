@@ -608,3 +608,4 @@ input, textarea, .d-desc, .fest-text, .fest-list, .info span, .hosp-meta, .hosp-
 .d-body { margin-top: -28px; border-radius: 28px 28px 0 0; }
 .d-body h2 { font-size: 23px; }
 .info { border: 0; background: #F7F6FA; border-radius: 16px; padding: 16px; }
+.d-media:not(.photo):not(.wide) img.main { top: calc(50% - 14px); height: 80%; }   /* 세로 포스터가 겹쳐 올라오는 본문 카드에 가리지 않게 */
