@@ -7,6 +7,11 @@ const view = $('#view');
 const KIND = { kidsmuseum: '어린이박물관', science: '과학관', experience: '체험관', safety: '안전체험관', nature: '자연·생태', museum: '박물관·전시' };
 const KIND_IMG = { kidsmuseum: 'kidscafe', science: 'edu', experience: 'edu', safety: 'today', nature: 'weekend', museum: 'exhibit' }; // 사진이 없을 때 쓰는 3D 아이콘
 const CAT = { festival: '축제', show: '공연', exhibit: '전시', edu: '체험·교육', kidscafe: '키즈카페', etc: '기타' };
+// 종류별 색·아이콘: 목록 왼쪽 띠, 종류 배지, 분류 칩에 같이 쓴다(style.css 의 .c-<종류>)
+const CAT_ICON = { festival: '🎪', show: '🎭', exhibit: '🖼️', edu: '🔬', kidscafe: '🧸', etc: '📌' };
+const catBadge = e => `<span class="cbadge c-${catKey(e)}">${CAT_ICON[catKey(e)]} ${CAT[catKey(e)]}</span>`;
+// 탭 맨 위 작은 헤더: 연보라 띠 + 일러스트 + 숫자 한 줄
+const tabHead = (eyebrow, title, img) => `<div class="tabhead"><div><b>${eyebrow}</b><h2>${title}</h2></div><img src="img/${img}.jpg" alt=""></div>`;
 const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 
 /* ---------- 아이콘 (24x24 선 아이콘) ---------- */
@@ -172,10 +177,10 @@ const rowBadges = e => `${e.dow_label ? `<span class="badge wk">${e.dow_label} �
 
 function rowHtml(e) {
   S.cache.set(e.id, e);
-  return `<div class="row" data-id="${esc(e.id)}" role="button" tabindex="0">
+  return `<div class="row cat c-${catKey(e)}" data-id="${esc(e.id)}" role="button" tabindex="0">
     <div class="ph">${thumb(e)}${e.category === 'festival' ? '<span class="fest-star" title="축제" aria-label="축제">★</span>' : ''}</div>
     <div class="body">
-      <div class="badges">${rowBadges(e)}</div>
+      <div class="badges">${catBadge(e)}${rowBadges(e)}</div>
       <h3>${esc(e.title)}</h3>
       <div class="meta">${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</div>
       <div class="meta dim">${CAT[e.category] ?? '기타'} · ${esc(where(e))}</div>
@@ -388,9 +393,11 @@ async function renderCal() {
     for (let i = 0; i < rows * 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); cells.push(iso(d)); }
   }
   const months = [...new Set(cells.map(c => c.slice(0, 7)))];
-  const [cals, list] = await Promise.all([
+  const am = parse(S.anchor), monthTo = iso(new Date(am.getFullYear(), am.getMonth() + 1, 0));
+  const [cals, list, monthAll] = await Promise.all([
     Promise.all(months.map(m => api('/api/calendar', { month: m, gu: S.gu, ...filterParams() }))),
     api('/api/events', { gu: S.gu, from: S.from, to: S.to, ...filterParams() }),
+    api('/api/events', { gu: S.gu, from: `${S.anchor.slice(0, 7)}-01`, to: monthTo }),   // 탭 헤더의 '이번 달 행사 수'
   ]);
   const days = Object.assign({}, ...cals.map(c => c.days));
   const curMonth = S.anchor.slice(0, 7);
@@ -410,6 +417,7 @@ async function renderCal() {
   const m = modeOf();
   const head = rangeLabel(S.from, S.to);
   view.innerHTML = `
+    ${tabHead(`${esc(S.gu)} · ${am.getMonth() + 1}월 캘린더`, `${S.anchor.slice(0, 7) === TODAY.slice(0, 7) ? '이번 달' : `${am.getMonth() + 1}월`} 행사 <em>${monthAll.total}</em>건 열려요`, 'i-today')}
     <div class="quick">
       <button data-quick="today" class="${m === 'today' ? 'on' : ''}">오늘</button>
       <button data-quick="tomorrow" class="${m === 'tomorrow' ? 'on' : ''}">내일</button>
@@ -426,7 +434,7 @@ async function renderCal() {
         <button class="chip kid ${S.family ? 'on' : ''}" data-f="family">아이와</button>
         <button class="chip free ${S.free ? 'on' : ''}" data-f="free">무료만</button>
         <span class="sep"></span>
-        ${[['', '전체'], ...Object.entries(CAT)].map(([k, v]) => `<button class="chip ${S.cat === k ? 'on' : ''}" data-cat="${k}">${v}</button>`).join('')}
+        ${[['', '전체'], ...Object.entries(CAT)].map(([k, v]) => `<button class="chip ${k ? `catc c-${k}` : ''} ${S.cat === k ? 'on' : ''}" data-cat="${k}">${k ? CAT_ICON[k] + ' ' : ''}${v}</button>`).join('')}
       </div>
       <div class="result-head" style="margin-top:18px"><h2>${head}</h2><span>${esc(S.gu)} · ${list.total}건</span></div>
       ${list.events.length ? groupedEvents(list.events)
@@ -480,7 +488,7 @@ function hospRow(h, now) {
   const state = open ? '<span class="badge open-now">지금 진료 중</span>' : r ? '<span class="badge">진료 시간 아님</span>' : `<span class="badge">오늘 ${now.idx === 7 ? '공휴일 ' : ''}휴진</span>`;
   // 네이버 지도는 접속이 막히는 경우가 있어, 좌표가 있으면 카카오맵(핀 + 길찾기 버튼)으로 연다
   const mapUrl = h.lat && h.lng ? `https://map.kakao.com/link/map/${encodeURIComponent(h.n)},${h.lat},${h.lng}` : `https://map.kakao.com/link/search/${encodeURIComponent('서울 ' + h.n)}`;
-  return `<div class="hosp-row">
+  return `<div class="hosp-row ${open ? 'is-open' : ''}">
     <div class="hosp-top"><b>${esc(h.n)}</b>${state}</div>
     <div class="hosp-badges">${h.er ? `<span class="badge er">${esc(h.er)}</span>` : ''}${h.h[7] ? '<span class="badge hol">공휴일 진료</span>' : ''}${h.h[6] ? '<span class="badge">일요일</span>' : ''}${isNight(h) ? '<span class="badge night">야간</span>' : ''}</div>
     <div class="hosp-meta">${esc(h.a)} · 오늘 ${now.idx === 7 ? '(공휴일) ' : ''}${hRange(r)}</div>
@@ -491,7 +499,7 @@ function hospRow(h, now) {
 }
 async function renderHosp() {
   if (!S.mapData) S.mapData = await (await fetch('seoul-map.json')).json();
-  view.innerHTML = '<section class="sec hosp" id="hospSec"></section>';
+  view.innerHTML = '<div id="hospHead"></div><section class="sec hosp" id="hospSec"></section>';
   await drawHosp();
 }
 async function drawHosp() {
@@ -504,6 +512,7 @@ async function drawHosp() {
   const all = data.items, list = all.filter(h => hospMatch(h, now))
     .sort((a, b) => hospOpen(b, now) - hospOpen(a, now) || (!!b.er - !!a.er) || a.n.localeCompare(b.n, 'ko'));
   const openN = all.filter(h => hospOpen(h, now)).length, shown = list.slice(0, 40);
+  $('#hospHead').innerHTML = tabHead(`${esc(gu)} 소아청소년과`, `지금 진료 중 <em>${openN}</em>곳`, 'i-kids');
   box.innerHTML = `
     <div class="sec-head"><div><h2>${esc(gu)} 소아청소년과</h2><p class="sec-sub">지금 진료 중 ${openN}곳 · 전체 ${all.length}곳 · 진료 시간표 기준이에요</p></div><button class="hosp-gu" data-gotab="map">지역 바꾸기</button></div>
     <div class="chips" style="margin-bottom:8px">${HFILTERS.map(([k, l]) => `<button class="chip ${S.hosp.has(k) ? 'on' : ''}" data-hf="${k}">${l}</button>`).join('')}</div>
@@ -523,7 +532,8 @@ async function renderPlaces() {
   const kinds = Object.keys(KIND).filter(k => all.places.some(p => p.kind === k));
   const regions = [...new Set(all.places.map(p => p.region))];
   view.innerHTML = `
-    <section class="sec">
+    ${tabHead('서울·경기 상시 운영', `아이와 가볼 만한 곳 <em>${all.places.length}</em>곳`, 'i-weekend')}
+    <section class="sec pgrid">
       <div class="sec-head"><div><h2>가볼 만한 곳</h2><p class="sec-sub">${S.placeSort === 'near' ? `${esc(near?.label ?? '')}에서 가까운 순` : `${esc(S.gu)}를 맨 위에, 구·동별로 모았어요`} · 문 여는 시간과 휴관일을 확인하세요</p></div></div>
       ${regions.length > 1 ? `<div class="chips" style="margin-bottom:8px"><button class="chip ${!S.placeRegion ? 'on' : ''}" data-pregion="">전체 지역</button>${regions.map(r => `<button class="chip ${S.placeRegion === r ? 'on' : ''}" data-pregion="${esc(r)}">${esc(r)}</button>`).join('')}</div>` : ''}
       <div class="chips"><button class="chip ${!S.placeKind ? 'on' : ''}" data-pkind="">전체</button>${kinds.map(k => `<button class="chip ${S.placeKind === k ? 'on' : ''}" data-pkind="${k}">${KIND[k]}</button>`).join('')}</div>
@@ -544,7 +554,7 @@ async function renderSaved() {
   ]);
   const gone = ids.length - events.length - places.length;
   events.sort((a, b) => a.start_date.localeCompare(b.start_date));
-  view.innerHTML = `<section class="sec"><div class="result-head"><h2>저장한 목록</h2><span>${events.length + places.length}건</span></div>
+  view.innerHTML = `${tabHead('내가 찜한 곳', `<em>${events.length + places.length}</em>곳 모아 뒀어요`, 'i-free')}<section class="sec"><div class="result-head"><h2>저장한 목록</h2><span>${events.length + places.length}건</span></div>
     <button class="share-all" data-share-all>${I('share')}저장한 ${events.length + places.length}곳 한 번에 공유하기</button>
     <div class="list">${events.map(rowHtml).join('')}${places.map(placeRow).join('')}</div>
     ${gone > 0 ? `<p class="foot-note">종료되었거나 사라진 행사 ${gone}건은 숨겼어요.</p>` : ''}</section>`;

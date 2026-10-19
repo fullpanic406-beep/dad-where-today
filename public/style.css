@@ -523,3 +523,49 @@ input, textarea, .d-desc, .fest-text, .fest-list, .info span, .hosp-meta, .hosp-
 .ptr.ready svg.i { color: var(--brand-dark); }
 .ptr.spin svg.i { animation: spin .8s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .ptr.spin svg.i { animation: none; } }
+
+/* ---- 칙칙함 줄이기(2026-10-19 시안 1·2·3·5) ---- */
+/* ① 탭별 작은 헤더 */
+.tabhead { position: relative; display: flex; align-items: center; margin: 12px 12px 0; height: 78px; padding: 0 110px 0 16px; border-radius: 22px; background: linear-gradient(120deg, #9B83EC, #B9A6F4 60%, #E4DCFA); color: #fff; overflow: hidden; box-shadow: 0 8px 20px rgba(90, 60, 180, .18); }
+.tabhead img { position: absolute; right: -6px; bottom: -14px; width: 96px; height: 96px; object-fit: cover; border-radius: 24px; transform: rotate(-6deg); box-shadow: 0 6px 16px rgba(0, 0, 0, .15); }
+.tabhead b { display: block; font-size: 12px; font-weight: 800; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tabhead h2 { font-size: 19px; font-weight: 800; letter-spacing: -0.04em; margin-top: 2px; white-space: nowrap; }
+.tabhead h2 em { font-style: normal; background: #fff; color: var(--brand-dark); border-radius: 8px; padding: 0 6px; margin: 0 2px; }
+.tabhead + .quick { margin-top: 0; }
+.tabhead + .sec, .tabhead + section { margin-top: 12px; }
+#hospHead:empty { display: none; }
+
+/* ② 가볼 곳: 사진이 큰 2열 카드 */
+.pgrid .list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; margin: 10px 0 6px; }
+.pgrid .list .row { flex-direction: column; gap: 0; padding: 0; border: 0; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 2px 10px rgba(30, 24, 50, .08); }
+.pgrid .list .row .ph { width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 0; box-shadow: none; }
+.pgrid .list .row .body { padding: 9px 10px 11px; justify-content: flex-start; }
+.pgrid .list .row .badges { position: absolute; left: 8px; top: 8px; margin: 0; }
+.pgrid .list .row .badge { background: rgba(255, 255, 255, .92); }
+.pgrid .list .row h3 { font-size: 14px; }
+.pgrid .list .row .meta { font-size: 12px; }
+.pgrid .list .row .meta.dim { display: none; }
+.pgrid .list .row .heart { top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, .85); }
+.pgrid .list .row:active { background: #fff; transform: scale(.97); }
+
+/* ③ 종류별 색·아이콘 */
+.c-festival { --cc: #FF7A45; --cs: #FFF0E8; } .c-show { --cc: #E0457B; --cs: #FDECF2; } .c-exhibit { --cc: #3B82F6; --cs: #EAF2FE; }
+.c-edu { --cc: #10A37F; --cs: #E5F7F1; } .c-kidscafe { --cc: #E09A00; --cs: #FFF6DF; } .c-etc { --cc: #8B8B9A; --cs: #F0F0F4; }
+.cbadge { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 11.5px; font-weight: 800; background: var(--cs); color: var(--cc); }
+.row.cat { border-left: 4px solid var(--cc); }
+.row.cat .ph { box-shadow: 0 0 0 2px var(--cc); }
+.chip.catc { border-color: var(--cc); color: var(--cc); }
+.chip.catc.on { background: var(--cc); border-color: var(--cc); color: #fff; }
+
+/* ⑤ 병원: 진료 중 강조·아이콘 */
+.hosp-row { position: relative; padding-left: 18px; overflow: hidden; }
+.hosp-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #C9C6D3; }
+.hosp-row.is-open::before { background: #10A37F; }
+.hosp-row.is-open { background: linear-gradient(90deg, #F0FBF6, #fff 45%); }
+.badge.open-now { height: 28px; padding: 0 12px 0 10px; border-radius: 14px; background: #10A37F; color: #fff; font-size: 12.5px; gap: 6px; }
+.badge.open-now::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, .35); animation: blink 1.4s infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+.hosp-top .badge:not(.open-now) { height: 26px; border-radius: 13px; background: #F0EFF5; flex: none; }
+.badge.night::before { content: '🌙'; margin-right: 3px; } .badge.hol::before { content: '📅'; margin-right: 3px; } .badge.er::before { content: '🚑'; margin-right: 3px; }
+.hosp-top b::before { content: '🩺'; margin-right: 6px; }
+@media (prefers-reduced-motion: reduce) { .badge.open-now::before { animation: none; } }
