@@ -1,5 +1,7 @@
 // 구별 JSON(public/data) 로더와 필터·집계. 서버 없이 브라우저에서 처리한다.
 // 상대 경로만 쓴다 (GitHub Pages 의 /저장소이름/ 아래에서도 동작하도록).
+import { staleReason, kstNow } from './fresh.js';
+
 const memo = new Map();
 const once = (key, fn) => { if (!memo.has(key)) memo.set(key, fn().catch(e => { memo.delete(key); throw e; })); return memo.get(key); };
 // 웹: 같은 사이트의 data/ 를 읽는다. 앱(Capacitor): config.js 의 APP_DATA_BASE(배포 주소)에서 최신 데이터를 먼저 읽고,
@@ -33,6 +35,7 @@ const span = e => (Date.parse(e.end_date) - Date.parse(e.start_date)) / 864e5;
 const openScore = e => (e.source !== 'yeyak' ? 0 : e.status === '접수중' ? 1 : e.status === '안내중' ? 0 : -1);
 
 function matches(e, p) {
+  if (staleReason(e)) return false; // 날짜 오류·끝난 행사·지난해 자료·오늘 이미 끝난 행사는 어디에도 보이지 않게
   if (p.from) {
     const to = p.to || p.from;
     if (!(e.start_date <= to && e.end_date >= p.from)) return false;
@@ -80,8 +83,9 @@ export async function queryCalendar(p) {
 // 구별 행사 수 (지도용) — 제목 없는 요약 파일만 읽는다
 export async function querySummary(p) {
   const { gu, cats, rows } = await loadIndex();
-  const out = {};
+  const out = {}, { today } = kstNow();
   for (const [g, s, e, fam, free, cat, , mask] of rows) {
+    if (e < today) continue; // 끝난 행사
     if (p.from) {
       const to = p.to || p.from;
       if (!(s <= to && e >= p.from)) continue;

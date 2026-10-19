@@ -19,6 +19,7 @@ import * as yeogijeogi from './sources/yeogijeogi.js';
 import { dongOf, dongFromText } from './dong.js';
 import * as manual from './sources/manual.js';
 import { applyEnrich } from './enrich.js';
+import { staleReason, kstNow } from '../public/fresh.js';
 import * as cultureFestival from './sources/culture-festival.js';
 import * as tourFestival from './sources/tourapi-festival.js';
 import * as seoulSpace from './places/seoul-space.js';
@@ -100,6 +101,14 @@ async function main() {
     console.log(`[ingest] ${src.label}: ${n}건${merged ? ` (다른 소스와 겹쳐 ${merged}건 합침)` : ''}`);
   }
   if (unknownGu) console.log(`[ingest] 구 정보가 25개 구가 아닌 ${unknownGu}건은 제외했습니다.`);
+
+  // 연도·날짜·시간 확인: 날짜가 잘못됐거나 이미 끝났거나 지난해 자료인 행사는 저장하지 않는다(앱 화면에서도 같은 기준으로 한 번 더 거른다)
+  const staleCounts = {}, now = kstNow();
+  for (let i = events.length - 1; i >= 0; i--) {
+    const why = staleReason(events[i], now);
+    if (why) { staleCounts[why] = (staleCounts[why] ?? 0) + 1; delete descs[events[i].id]; events.splice(i, 1); }
+  }
+  if (Object.keys(staleCounts).length) console.log(`[ingest] 지난 행사 제외: ${Object.entries(staleCounts).map(([k, v]) => `${k} ${v}건`).join(', ')}`);
 
   // 안전장치: 이전 결과보다 절반 넘게 줄었거나 너무 적으면 반영하지 않는다
   const metaFile = path.join(OUT, 'meta.json');

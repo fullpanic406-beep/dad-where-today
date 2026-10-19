@@ -46,8 +46,12 @@ const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())
 const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
 const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const md = s => { const d = parse(s); return `${d.getMonth() + 1}.${d.getDate()}(${DOW[d.getDay()]})`; };
-const rangeLabel = (a, b) => (a === b ? md(a) : `${md(a)} ~ ${md(b)}`);
+const md = (s, year = false) => { const d = parse(s); return `${year ? d.getFullYear() + '.' : ''}${d.getMonth() + 1}.${d.getDate()}(${DOW[d.getDay()]})`; };
+// 올해가 아니거나 시작·끝 연도가 다르면 연도를 붙인다(2025.12.30 ~ 2026.12.31 이 "12.30 ~ 12.31"로 보이지 않게)
+const rangeLabel = (a, b) => {
+  const y = String(new Date().getFullYear()), cross = a.slice(0, 4) !== b.slice(0, 4);
+  return a === b ? md(a, a.slice(0, 4) !== y) : `${md(a, cross || a.slice(0, 4) !== y)} ~ ${md(b, cross || b.slice(0, 4) !== y)}`;
+};
 const whenText = e => `${rangeLabel(e.start_date, e.end_date)}${e.dow_label ? (e.dow_label === '주말' ? ' · 주말마다' : ` · 매주 ${e.dow_label}`) : ''}`;
 const where = e => (e.place && !e.place.includes(e.gu) ? `${e.gu} · ${e.place}` : e.place || e.gu);
 const catKey = e => (CAT[e.category] ? e.category : 'etc');
