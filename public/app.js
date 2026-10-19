@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js';
+import { clearCache, km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -37,6 +37,7 @@ const P = {
   rain: `<path d="${CLOUD_UP}"/><path d="M8.5 18.5l-1 2.5M12.5 18.5l-1 2.5M16.5 18.5l-1 2.5"/>`,
   snow: `<path d="${CLOUD_UP}"/><path d="M8.5 19h.01M12.5 20.5h.01M16.5 19h.01" stroke-width="2.6"/>`,
   bolt: `<path d="${CLOUD_UP}"/><path d="M12.8 14l-2.3 3.5h3L11.7 21"/>`,
+  refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
 };
 const I = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 
@@ -435,7 +436,7 @@ async function renderCal() {
 }
 
 /* ---------- 구 지도 ---------- */
-const SCALE = ['#FFE6D4', '#FFC9A3', '#FFA66E', '#FF8441', '#E85A0C'];
+const SCALE = ['#ECE6FC', '#D3C6F7', '#B39FF0', '#9479E6', '#6A4FCC'];
 async function renderMap() {
   if (!S.mapData) S.mapData = await (await fetch('seoul-map.json')).json();
   const sum = (await api('/api/summary', { from: S.from, to: S.to, ...filterParams() })).gu;
@@ -447,8 +448,8 @@ async function renderMap() {
     <div class="map-sub"><b>${rangeLabel(S.from, S.to)}</b> 기준 구별 행사 수예요. 지역을 눌러 골라 보세요.</div>
     <div class="map-card">
       <svg viewBox="${viewBox}" role="img" aria-label="서울 구 지도">
-        <defs><filter id="mapShadow" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#B4540F" flood-opacity=".22"/></filter>
-          <filter id="selGlow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#E85A0C" flood-opacity=".45"/></filter></defs>
+        <defs><filter id="mapShadow" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#5A43B0" flood-opacity=".22"/></filter>
+          <filter id="selGlow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#6A4FCC" flood-opacity=".45"/></filter></defs>
         <g filter="url(#mapShadow)">${districts.filter(d => d.name !== S.gu).map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" fill-rule="evenodd"/>`).join('')}</g>
         ${districts.filter(d => d.name === S.gu).map(d => `<path data-gu="${d.name}" d="${d.d}" fill="${fill(sum[d.name]?.n)}" fill-rule="evenodd" class="sel" filter="url(#selGlow)"/>`).join('')}
         ${districts.map(d => { const c = sum[d.name]?.n ?? 0, dark = c / max > .6; return `<text class="${dark ? 'lt' : ''} ${d.name === S.gu ? 'sel' : ''}" x="${d.cx}" y="${d.cy - 1}">${d.name.replace(/구$/, '')}<tspan class="cnt" x="${d.cx}" dy="13">${c || ''}</tspan></text>`; }).join('')}
@@ -1006,8 +1007,50 @@ function startSplash() {
   };
 }
 
+/* ---------- 당겨서 새로고침 ---------- */
+// 목록 맨 위에서 아래로 당겼다 놓으면 최신 데이터를 다시 받는다(옆으로 미는 동작은 무시)
+function setupPullRefresh() {
+  const ptr = document.createElement('div'); ptr.className = 'ptr'; ptr.innerHTML = I('refresh'); $('#app').appendChild(ptr);
+  const LIMIT = 64;
+  let start = null, dy = 0, busy = false;
+  const place = (d, anim) => {
+    ptr.style.transition = anim ? 'transform .2s ease, opacity .2s ease' : 'none';
+    ptr.style.transform = `translateY(${d - 48}px) rotate(${d * 4}deg)`;
+    ptr.style.opacity = Math.min(1, d / LIMIT);
+  };
+  const reset = () => { start = null; dy = 0; ptr.classList.remove('ready'); place(0, true); };
+  view.addEventListener('touchstart', e => {
+    if (!busy && view.scrollTop <= 0 && e.touches.length === 1) start = { x: e.touches[0].clientX, y: e.touches[0].clientY, dir: '' };
+  }, { passive: true });
+  view.addEventListener('touchmove', e => {
+    if (!start) return;
+    const dx = e.touches[0].clientX - start.x, d = e.touches[0].clientY - start.y;
+    if (!start.dir && Math.abs(dx) + Math.abs(d) > 8) start.dir = Math.abs(dx) > Math.abs(d) ? 'x' : 'y';
+    if (start.dir === 'x' || d <= 0 || view.scrollTop > 0) { if (dy) reset(); else start = start.dir === 'x' || d < 0 ? null : start; return; }
+    dy = Math.min(100, d * 0.5); place(dy, false); ptr.classList.toggle('ready', dy >= LIMIT);
+  }, { passive: true });
+  view.addEventListener('touchend', async () => {
+    if (!start) return;
+    if (dy < LIMIT) return reset();
+    start = null; busy = true; place(LIMIT * 0.8, true); ptr.classList.add('spin');
+    try { clearCache(); await render(); toast('새로 불러왔어요'); }
+    finally { busy = false; ptr.classList.remove('spin'); reset(); }
+  });
+}
+
+/* ---------- 상태바 글자색(안드로이드 앱) ---------- */
+// 흰 상단 바 위에서는 어두운 글자, 보라 시작 화면·사진이 위에 오는 상세 화면에서는 흰 글자
+let barStyle = '';
+function syncBars() {
+  const bars = window.Capacitor?.Plugins?.SystemBars; if (!bars) return;
+  const style = document.querySelector('#splash:not(.out)') || !detail.hidden ? 'DARK' : 'LIGHT';
+  if (style !== barStyle) { barStyle = style; bars.setStyle({ style, bar: 'StatusBar' }).catch(() => {}); }
+}
+new MutationObserver(syncBars).observe($('#app'), { subtree: true, attributes: true, attributeFilter: ['hidden', 'class'], childList: true });
+
 (async function init() {
   view.addEventListener('scroll', () => $('.top').classList.toggle('scrolled', view.scrollTop > 4), { passive: true });
+  setupPullRefresh(); syncBars();
   const splash = startSplash();
   renderChrome();
   view.innerHTML = `<div class="loading"><img src="img/logo.png" alt="">갈 곳을 찾는 중…</div>`;

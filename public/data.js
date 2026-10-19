@@ -3,6 +3,7 @@
 import { staleReason, kstNow } from './fresh.js';
 
 const memo = new Map();
+export const clearCache = () => memo.clear(); // 당겨서 새로고침: 받아 둔 데이터를 비워 다음 요청 때 새로 받는다
 const once = (key, fn) => { if (!memo.has(key)) memo.set(key, fn().catch(e => { memo.delete(key); throw e; })); return memo.get(key); };
 // 웹: 같은 사이트의 data/ 를 읽는다. 앱(Capacitor): config.js 의 APP_DATA_BASE(배포 주소)에서 최신 데이터를 먼저 읽고,
 // 오프라인·장애 때는 앱에 들어 있는 스냅샷으로 대체한다.

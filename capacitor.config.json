@@ -2,6 +2,17 @@
   "appId": "com.kidswithdaddy",
   "appName": "아빠 오늘 어디가",
   "webDir": "public",
-  "server": { "androidScheme": "https" },
-  "android": { "allowMixedContent": false }
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "LIGHT"
+    }
+  }
 }
