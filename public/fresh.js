@@ -35,6 +35,7 @@ export function endMinute(time) {
 // 행사를 빼야 하는 이유(보여 줘도 되면 '')
 export function staleReason(e, now = kstNow()) {
   if (!validDate(e.start_date) || !validDate(e.end_date) || e.start_date > e.end_date) return '날짜 오류';
+  if (!/[가-힣A-Za-z0-9]/.test(e.title ?? '')) return '제목 오류';   // 원본 글자가 깨져 "???"만 남은 행사
   if (e.end_date < now.today) return '끝난 행사';
   // 제목에 적힌 연도가 모두 올해보다 이전이면 지난해 자료("2025 건대프리마켓"). "2025-2026 시즌"처럼 올해가 들어 있으면 둔다
   const years = (String(e.title ?? '').match(/(?<!\d)20\d\d(?!\d)/g) ?? []).map(Number);

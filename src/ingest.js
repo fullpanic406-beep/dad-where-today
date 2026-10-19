@@ -37,6 +37,24 @@ const today = (() => { // 한국 시간 기준 오늘 (CI 서버는 UTC)
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 })();
 const log = m => process.stdout.write(`\r[ingest] ${m}   `);
+// 사진 주소 정리: 서울시 공공서비스예약의 상대 경로(/cmsdata/…)는 사이트 주소를 붙이고, 관광공사 http 사진은 https 로(앱은 http 사진을 막는다)
+const fixImage = (u, source) => {
+  if (!u) return '';
+  if (u.startsWith('/') && source === 'yeyak') return 'https://yeyak.seoul.go.kr' + u;
+  return u.replace(/^http:\/\/tong\.visitkorea\.or\.kr\//, 'https://tong.visitkorea.or.kr/');
+};
+// 설명 글에 남은 HTML 태그를 지운다(<br>은 줄바꿈). 워드에서 붙여 넣은 <v:line …>, <meta …>, 속성 달린 태그 등.
+// "<TASTE OF GREEN>"처럼 꺾쇠를 괄호로 쓴 제목·문구는 태그가 아니므로 남긴다(대문자·한글로 시작하거나 속성이 없음)
+const stripTags = (v, br = '\n') => {
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, stripTags(x, br)]));
+  if (typeof v !== 'string') return v;
+  return v.replace(/\r\n?/g, '\n')
+    .replace(/<br\s*\/?>/gi, br)
+    .replace(/<\/?(?:p|div|span|meta|address|font|b|strong|em|u|o:p|table|tbody|tr|td|ul|ol|li|h[1-6])(?:\s[^>]*)?\/?>/gi, '')
+    .replace(/<\/?[a-z][\w:-]*:[\w-]+[^>]*>/g, '')                                   // <v:line …>, <o:p> 같은 이름공간 태그
+    .replace(/<[a-z][\w:-]*(?:\s+[\w:-]+=(?:"[^"]*"|'[^']*'))+\s*\/?>/g, '')          // 속성이 달린 소문자 태그
+    .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+};
 const write = (file, data) => writeFileSync(file, JSON.stringify(data));
 
 async function main() {
@@ -109,6 +127,22 @@ async function main() {
     if (why) { staleCounts[why] = (staleCounts[why] ?? 0) + 1; delete descs[events[i].id]; events.splice(i, 1); }
   }
   if (Object.keys(staleCounts).length) console.log(`[ingest] 지난 행사 제외: ${Object.entries(staleCounts).map(([k, v]) => `${k} ${v}건`).join(', ')}`);
+
+  // 같은 소스에서 똑같은 행사(구·제목·기간·시간·장소가 모두 같음)가 두 번 내려오면 하나만 남긴다
+  const exact = new Set();
+  let sameDup = 0;
+  for (let i = 0; i < events.length; i++) {
+    const e = events[i], k = [e.source, e.gu, e.title.replace(/\s+/g, ''), e.start_date, e.end_date, e.time ?? '', e.place ?? ''].join('|');
+    if (exact.has(k)) { delete descs[e.id]; events.splice(i--, 1); sameDup++; } else exact.add(k);
+  }
+  if (sameDup) console.log(`[ingest] 같은 소스 중복 행사 ${sameDup}건 제외`);
+
+  // 화면에 그대로 찍히는 값 정리: 상대 경로·http 사진, 좌표 한쪽만 있는 값, 설명 속 HTML 태그
+  for (const e of events) {
+    e.image = fixImage(e.image, e.source);
+    if ((e.lat == null) !== (e.lng == null)) { e.lat = null; e.lng = null; }
+  }
+  for (const [id, d] of Object.entries(descs)) descs[id] = stripTags(d);
 
   // 안전장치: 이전 결과보다 절반 넘게 줄었거나 너무 적으면 반영하지 않는다
   const metaFile = path.join(OUT, 'meta.json');
@@ -201,6 +235,12 @@ async function main() {
   }
   console.log(`[ingest] 동 정보: 장소 ${places.length}곳 중 ${placeDong}곳`);
   for (const p of places) if (p.image && excludeImg.has(p.image)) { p.image = ''; p.imageLicense = ''; imgDropped++; }
+  // 장소 값 정리: http 사진(앱에서 막힘)을 https 로, "http://가평군청" 같은 주소 아닌 홈페이지는 비우고, 운영 시간 등의 <br> 태그 제거
+  for (const p of places) {
+    p.image = fixImage(p.image, p.source);
+    if (p.url && !/^https?:\/\/[^\s/]+\.[a-z]{2,}/i.test(p.url)) p.url = '';
+    for (const k of ['hours', 'fee', 'closed', 'desc']) if (typeof p[k] === 'string') p[k] = stripTags(p[k], ' / ').replace(/\s*\n\s*/g, ' ').trim();
+  }
   console.log(`[ingest] 얼굴이 나온 사진 제외: ${imgDropped}건`);
   places.sort((a, b) => a.region.localeCompare(b.region, 'ko') || a.gu.localeCompare(b.gu, 'ko') || a.dong.localeCompare(b.dong, 'ko') || a.name.localeCompare(b.name, 'ko'));
   write(path.join(OUT, 'places.json'), { meta: { generatedAt: new Date().toISOString(), total: places.length, counts: placeCounts }, places });
