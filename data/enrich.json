@@ -1,48 +1,5 @@
 [
  {
-  "gu": "양천구",
-  "title": "양천가족 거리축제",
-  "start_date": "2026-10-25",
-  "set": {
-   "time": "10:30~21:00",
-   "is_free": 1,
-   "fee": "무료",
-   "place": "신정네거리역 일대 (서울남부지방법원 방향 약 900m 구간)",
-   "link": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=584"
-  },
-  "desc": "프로그램: 거리퍼레이드+북페스티벌+키즈 플레이존+버스킹+메인무대 공연+포토존\n· 거리퍼레이드 10:30~11:30: 라퍼커션·마칭밴드 공연과 18개 동 주민 행진으로 축제를 열어요\n· 북페스티벌 11:00~18:00: 사람책·저자와의 만남, 야외도서관\n· 키즈 플레이존 11:00~18:00: 대형 인형극 퍼포먼스, 유로번지, 재미꼴롱 정글짐\n· 구름길·여행길·바람길 11:00~18:00: 꿈 풍선 띄우기, Ai·360도 포토존, 양천 체력왕, 슬라임 만들기, 허브정원, 버블쇼\n· 프린지 스테이지 12:30~18:10: 거리 버스킹 공연\n· 메인무대: 개막식 12:00 · 태군 노래자랑 13:00~15:00 · 전통예술제 15:30~17:30\n· 축하공연 18:40~21:00: 안예은, 소유, 백지영, 박지현 등\n· 이벤트: 양천 골목대장, 도어락 이벤트, 큐피트 이벤트(경품)\n· 교통통제: 10/24(토) 22:00 ~ 10/26(월) 04:00, 신정네거리역 일대\n주최·주관: 양천구 · 양천문화재단\n문의: 02-2620-3408",
-  "note": "서울시 축제 사이트(펀서울)의 공식 프로그램 안내와 양천구청 홍보 자료를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=584"
-  ]
- },
- {
-  "gu": "양천구",
-  "title": "신월4동 어울림 한마당 축제",
-  "start_date": "2026-10-24",
-  "set": {
-   "time": "10:30~15:00",
-   "link": "https://www.yangcheon.go.kr/site/yangcheon/05/10505010000002023100512.jsp"
-  },
-  "note": "양천구청 '우리동네축제' 안내(2026-10-13 수정)를 확인했어요. 일정·장소는 바뀔 수 있어요.",
-  "sources": [
-   "https://www.yangcheon.go.kr/site/yangcheon/05/10505010000002023100512.jsp"
-  ]
- },
- {
-  "gu": "양천구",
-  "title": "신정1동 축제",
-  "start_date": "2026-10-24",
-  "set": {
-   "time": "11:00~15:00",
-   "link": "https://www.yangcheon.go.kr/site/yangcheon/05/10505010000002023100512.jsp"
-  },
-  "note": "양천구청 '우리동네축제' 안내(2026-10-13 수정)를 확인했어요. 일정·장소는 바뀔 수 있어요.",
-  "sources": [
-   "https://www.yangcheon.go.kr/site/yangcheon/05/10505010000002023100512.jsp"
-  ]
- },
- {
   "gu": "광진구",
   "title": "2026 서울어텀페스타",
   "start_date": "2026-09-18",
@@ -68,43 +25,6 @@
   ]
  },
  {
-  "gu": "동작구",
-  "title": "도심속바다축제",
-  "start_date": "2026-10-25",
-  "set": {},
-  "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=670"
-  ],
-  "desc": "- 서울시 최대 수산물도매시장인 노량진수산시장을 활용하여 도심 속에서 바다를 체험할 수 있는 「도심 속 바다축제」 개최 - 수산물 직거래 장터, 저렴한 먹거리장터, 바다문화 체험, 수산물 요리 시연 및 시식행사 등 다양한 프로그램 운영을 통해 주민과 관광객에게 오감만족 문화 경험 제공 - 노량진수산시장과 연계한 수산물 구매 페이백 이벤트 등 소비촉진 프로그램을 운영하여 축제와 시장 간 상생모델을 구축하고, 전통시장 활성화 및 지역경제에 기여"
- },
- {
-  "gu": "마포구",
-  "title": "2026 서울 바비큐 페스티벌",
-  "start_date": "2026-10-24",
-  "set": {
-   "time": "12:00~20:30",
-   "fee": "무료(홈페이지 참고)"
-  },
-  "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=350"
-  ],
-  "desc": "올가을, 서울에서 세계인의 입맛을 사로잡을 'K-바비큐'의 향연이 펼쳐진다. '치익-' 불판 위에서 맛있게 익어가는 소리, 한강 바람을 따라 퍼지는 고소한 바비큐향, K-BBQ와 도심 속 캠핑·피크닉을 결합한 글로벌 미식관광 축제 '서울 바비큐 페스티벌'을 오는 10월 24일(토)부터 25일(일)까지 2일간 난지캠핑장 일대에서 개최합니다. 나만의 바비큐를 즐길 수 있는 '셀프 BBQ존', 스타 셰프들의 화려한 바비큐 퍼포먼스를 즐길 수 있는 '바비큐 마스터즈', 서울 대표 맛집을 만나볼 수 있는 "
- },
- {
-  "gu": "송파구",
-  "title": "한성백제문화제",
-  "start_date": "2026-10-23",
-  "set": {
-   "link": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=581"
-  },
-  "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=581"
-  ]
- },
- {
   "gu": "영등포구",
   "title": "한강역사탐방",
   "start_date": "2026-04-20",
@@ -117,21 +37,6 @@
   "sources": [
    "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=396"
   ]
- },
- {
-  "gu": "영등포구",
-  "title": "2026 서울 러너스 페스티벌",
-  "start_date": "2026-10-24",
-  "set": {
-   "time": "7:00~12:00",
-   "fee": "서울플러스 10K 대회참가비 10,000원",
-   "is_free": 0
-  },
-  "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=682"
-  ],
-  "desc": "2026년 10월 24일(토) 7:30 · 대회장 오픈 | 6:00 · 메인 프로그램 #1 | SEOUL PLUS 10K [일반/크루] 7:30"
  },
  {
   "gu": "중구",
@@ -163,18 +68,6 @@
  },
  {
   "gu": "중구",
-  "title": "2026 서울디자인위크",
-  "start_date": "2026-10-14",
-  "set": {
-   "link": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=449"
-  },
-  "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=449"
-  ]
- },
- {
-  "gu": "중구",
   "title": "서울을 새롭게 맛보는 특별한 7일, 2026 서울미식주간",
   "start_date": "2026-10-23",
   "set": {},
@@ -194,77 +87,6 @@
    "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=601"
   ],
   "desc": "○ 일 정 : 2026. 10. 29.(목)~ 10. 31.(토) (3일간) ※ 미리정동야행: 26.10. 29.(목)/ 행사개막식 : 26. 10. 30.(금) ○ 장 소 : 정동 일대(덕수궁길, 정동길, 정동일대 역사문화시설 등)"
- },
- {
-  "gu": "서초구",
-  "title": "말죽거리축제",
-  "start_date": "2026-10-23",
-  "set": {
-   "time": "12:00~21:00"
-  },
-  "desc": "프로그램: 지역가수 공연+초청가수 공연+동호회 공연+어린이 그림대회 전시·시상\n· 무대공연 17:00~21:00: 17:00 지역가수 · 18:00~19:00 송민경·류지광 · 19:00~21:00 지역동호회(라인댄스·통기타·색소폰·DJ 등)\n· 어린이 그림대회: 말죽거리공원에서 연 대회 수상작을 축제장에 전시하고 시상식도 이날 열려요",
-  "note": "서초구청 안내(보도자료·공지)를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
-  "sources": []
- },
- {
-  "gu": "강남구",
-  "title": "한강페스티벌",
-  "set": {
-   "link": "https://www.seoul.go.kr/festa/hangang/"
-  },
-  "note": "서울시 한강페스티벌 공식 누리집을 확인했어요(2026-10-20). 프로그램별 일정·요금이 달라요.",
-  "sources": [
-   "https://www.seoul.go.kr/festa/hangang/"
-  ]
- },
- {
-  "gu": "서초구",
-  "title": "한강페스티벌-가을",
-  "set": {
-   "link": "https://www.seoul.go.kr/festa/hangang/"
-  },
-  "desc": "주최·주관: 서울특별시 미래한강본부\n프로그램: 1. 도전 프로그램 - 커다란 운동장이 된 한강에서 즐기는 가을맞이 이색 운동 3종 체험 '#오.운.한(오늘 운동 한강에서 완료)', 주변에서 쉽게 구할 수 있는 재료로 불을 쓰지 않고 만들어 먹는 맛있는 한끼 '한강한끼', 트리 클라이밍, 짚라인 등 자연 속에서 아이들의 오감을 깨우는 특별한 놀이터 '한강 포레스트 어드벤처', 청년 셰프 20인의 K-스트\n문의: 02-120",
-  "note": "서울시 한강페스티벌 공식 누리집과 관광공사 행사 정보를 확인했어요(2026-10-20). 프로그램별 일정·요금이 달라요.",
-  "sources": [
-   "https://www.seoul.go.kr/festa/hangang/",
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=400"
-  ]
- },
- {
-  "gu": "강남구",
-  "title": "도곡 메타세쿼이아 로드 페스타",
-  "set": {
-   "link": "https://dogokmrf.com/"
-  },
-  "note": "축제 공식 누리집과 강남구 보도(강남신문·퍼블릭타임스 10/20)를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://dogokmrf.com/",
-   "http://m.gangnamnews.net"
-  ]
- },
- {
-  "gu": "강동구",
-  "title": "서울오페라 페스티벌",
-  "set": {
-   "link": "http://www.seouloperafestival.com/"
-  },
-  "desc": "프로그램: 마스터클래스+오페라 갈라쇼+리허설 공개+가족오페라 「마술피리」\n· 10/21(수) 14:00 소극장 드림: Bass 연광철 마스터클래스(무료)\n· 10/22(목) 19:30 대극장 한강: 그랜드오페라갈라쇼 [Viva Verdi](R석 5만 원·S석 3만 원)\n· 10/23(금) 15:00 대극장 한강: 리허설 오픈 데이(전석 1만 원)\n· 10/24(토) 16:30 대극장 한강: 오페라 100% 즐기기 [마술피리] 해설(무료)\n· 10/24(토) 17:00 대극장 한강: 가족오페라 [마술피리](R 8만·S 5만·A 3만 원)\n문의: 02-518-0154 / 02-440-0500",
-  "note": "서울시 문화행사 공식 안내(서울문화포털)를 확인했어요(2026-10-20). 공연별 요금이 달라요.",
-  "sources": [
-   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159077&menuNo=200010"
-  ]
- },
- {
-  "gu": "강동구",
-  "title": "자원순환 시민행사",
-  "set": {
-   "link": "https://www.instagram.com/p/Dep67YGjywZ/"
-  },
-  "note": "서울새활용플라자 공식 SNS와 서울디자인재단 공지를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://www.instagram.com/p/Dep67YGjywZ/",
-   "https://seouldesign.or.kr/"
-  ]
  },
  {
   "gu": "강북구",
@@ -292,33 +114,6 @@
   ]
  },
  {
-  "gu": "광진구",
-  "title": "어르니마켓",
-  "set": {
-   "time": "토·일 12:00~19:00 (10/17·18·24·25)",
-   "fee": "무료",
-   "link": "https://blog.naver.com/vuilder/224428079851"
-  },
-  "desc": "프로그램: 키덜트 굿즈 마켓\n· 디즈니·픽사, 주술회전·귀멸의 칼날·산리오·짱구 등 캐릭터 굿즈를 한자리에서\n· 1주차(10/17~18)와 2주차(10/24~25) 참여 셀러가 달라요\n· 주차별 선착순 기념품: 1주차 타포린백 / 2주차 스트링백\n· 장소: 커먼그라운드 야외광장(건대입구역 6번 출구 근처)\n문의: 02-467-2747",
-  "note": "서울시 문화행사 공식 안내(서울문화포털)를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159719&menuNo=200010"
-  ]
- },
- {
-  "gu": "노원구",
-  "title": "별빛축제",
-  "set": {
-   "fee": "무료(일부 프로그램 사전 예약)",
-   "link": "https://science.seoul.go.kr/sciEvent/starlight/read?menuId=76&progMstId=2338"
-  },
-  "desc": "프로그램: 천체 관측+천문 특강+과학 체험 부스\n· 전문가와 함께하는 공개 천체 관측(10/24 토 야간개장 ~21:00, 비 오면 관측만 취소)\n· 릴레이 천문 특강(별도 예약)\n· 나만의 별빛 작품 만들기 과학 체험 부스(현장 예약)\n· 예술가 특별 전시와 과학 워크숍(별도 예약)\n· 미스터리 행성 탐험 체험 이벤트(별도 예약), 전시해설 연계 프로그램\n· 사전 예약 시 기념품 증정, 예약 없이도 관측·전시 관람 가능\n주최·주관: 서울시립과학관 · 노원천문우주과학관\n문의: 02-970-4581",
-  "note": "서울시 문화행사 공식 안내(서울문화포털)와 서울시립과학관 안내를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159876&menuNo=200010"
-  ]
- },
- {
   "gu": "동작구",
   "title": "사육신 충효예술한마당",
   "desc": "프로그램: 사육신 역사관 야외마당 갤러리 전시\n· 전시 「서남권 예술벨트 동작 마당 갤러리展」 10/3~11/28\n· 10월: 한국사진작가협회 동작구지부 사육신 사진전, 동작의 과거·미래·명소 사진전\n· 11월: 동양화가 이다혜 작가 전시\n· 관람 9:00~18:00, 일·월요일 휴무, 무료\n주최·주관: 동작문화재단(서울문화재단 「예술로 매력서울」 선정 사업)\n문의: 070-7204-3258",
@@ -327,18 +122,6 @@
    "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159614&menuNo=200010",
    "https://www.instagram.com/p/DdnpJ8fESkY/",
    "https://www.gukjenews.com"
-  ]
- },
- {
-  "gu": "동작구",
-  "title": "동작 미래과학페스티벌",
-  "set": {
-   "link": "https://blog.naver.com/dongjaksaran/224442643742"
-  },
-  "note": "동작구 공식 블로그·페이스북과 대방청소년센터 공지를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://blog.naver.com/dongjaksaran/224442643742",
-   "https://www.facebook.com/dongjakgu"
   ]
  },
  {
@@ -355,96 +138,12 @@
   ]
  },
  {
-  "gu": "마포구",
-  "title": "연남동 주민화합 대축제",
-  "set": {
-   "link": "https://blog.naver.com/prmapo77/224446566397"
-  },
-  "note": "마포구 공식 블로그(10월 동별 가을축제 일정)와 연남동 공식 SNS를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://blog.naver.com/prmapo77/224446566397",
-   "https://www.instagram.com/p/Deq4HHEzKxZ/"
-  ]
- },
- {
-  "gu": "서초구",
-  "title": "양재아트살롱",
-  "set": {
-   "link": "https://yangjaeartsalon.co.kr/"
-  },
-  "note": "양재아트살롱 공식 누리집과 서초구청 공지를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://yangjaeartsalon.co.kr/",
-   "https://yangjaeartsalon.co.kr/schedule/schedule.php"
-  ]
- },
- {
   "gu": "양천구",
   "title": "Art Agora Festival",
   "desc": "프로그램: 공연+체험 문화축제\n· 2층 아트홀 공연: 소프라노 윤현정·테너 김은국 성악, 자연가락 소리나눔(혼코리아) 전통 가락, System on Public Eye 퍼포먼스, 도시아이들·강민주 무대, 여울무용단 춤\n· 1층 체험존: 테라리움(작은 정원) 만들기, 기념 포토부스\n· 서울시 민간축제 지원사업",
   "note": "서울시 문화행사 공식 안내(서울문화포털)를 확인했어요(2026-10-20).",
   "sources": [
    "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159820&menuNo=200010"
-  ]
- },
- {
-  "gu": "영등포구",
-  "title": "영등포선유도원축제",
-  "set": {
-   "link": "https://www.ydpcf.or.kr/festival/seonyudo.do"
-  },
-  "note": "영등포문화재단 축제 누리집과 관광공사 행사 정보를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://www.ydpcf.or.kr/festival/seonyudo.do"
-  ]
- },
- {
-  "gu": "영등포구",
-  "title": "영등포 어린이 미술대전",
-  "set": {
-   "link": "https://ydpartsquare.com/forum/view/1550574",
-   "target": "서울시 유·초등학생(유치부 5~7세·저학년·고학년)"
-  },
-  "desc": "프로그램: 어린이 그림 그리기 대회\n· 그림 그리기 13:00~16:00 / 작품 제출 15:30~16:00 / 시상식 17:00(선유도공원 원형극장)\n· 신청: 10/22(목) 18시까지 이메일 접수(사전 200명), 당일 11:00~13:00 현장 접수 선착순 50명\n· 준비물: 개인 미술도구, 돗자리, 따뜻한 겉옷(8절 도화지는 현장 배부)\n· 시상 총 100명, 수상작 전시 10/28~11/1 영등포아트스퀘어\n· 선유도공원은 주차장이 없어 대중교통 이용 권장",
-  "note": "서울시 문화행사 공식 안내(서울문화포털)와 영등포아트스퀘어 공지를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159838&menuNo=200010",
-   "https://ydpartsquare.com/forum/view/1550574"
-  ]
- },
- {
-  "gu": "용산구",
-  "title": "폰-프리 북클럽",
-  "set": {
-   "time": "금 18:30~19:30 (10/16·10/23)"
-  },
-  "desc": "프로그램: 휴대폰 없이 정원에서 책 읽기\n· 읽고 싶은 책 1권을 들고 루프탑 미니정원에 모여요\n· 진행 시간 동안 휴대폰을 내려놓고 각자 자유롭게 독서\n· 준비물: 읽고 싶은 책 1권, 참가 신청 필요\n주최·주관: 아이파크몰 용산점 · 서울가드닝클럽",
-  "note": "서울시 문화행사 공식 안내(서울문화포털)를 확인했어요(2026-10-20).",
-  "sources": [
-   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159327&menuNo=200010"
-  ]
- },
- {
-  "gu": "용산구",
-  "title": "한복문화주간",
-  "set": {
-   "link": "https://www.kcdf.or.kr/brd/board/322/L/menu/291"
-  },
-  "note": "한국공예·디자인문화진흥원 행사 소식과 문체부 보도를 확인했어요(2026-10-20). 10/21(수) 국립중앙박물관 열린마당에서 개막 기념행사가 열려요.",
-  "sources": [
-   "https://www.kcdf.or.kr/brd/board/322/L/menu/291",
-   "https://www.korean-culture.org"
-  ]
- },
- {
-  "gu": "종로구",
-  "title": "경복궁 별빛야행",
-  "set": {
-   "link": "https://www.kh.or.kr/short/g6cX"
-  },
-  "note": "국가유산진흥원 공식 안내를 확인했어요(2026-10-20). 사전 예매제예요.",
-  "sources": [
-   "https://www.kh.or.kr/short/g6cX"
   ]
  },
  {
@@ -497,21 +196,6 @@
   "sources": [
    "https://www.newspim.com/news/view/20261016001293",
    "https://festival.seoul.go.kr/"
-  ]
- },
- {
-  "gu": "중구",
-  "title": "로컬트립",
-  "set": {
-   "time": "10:00~18:00",
-   "fee": "무료",
-   "link": "https://www.momonews.com/81643"
-  },
-  "desc": "프로그램: 서울에서 떠나는 7개 지역 가을여행\n· 참여 지역: 경기·충남·경북·강원·제주·전남·전북\n· 체험: 지역 랜드마크 키링 만들기, 미니게임 「소풍 가는 길」, 지자체 부스 스탬프 투어\n· 먹거리: 로컬 특산주 시음회, 농특산물 디저트·카페, 가을 소풍 도시락\n· 로컬 굿즈·공예 상품 전시 판매, 거리 공연 「구석구석 라이브」\n· 장소: 지역관광 안테나숍 옥상·1층 광장(서울시청 맞은편)\n주최·주관: 서울시 · 서울관광재단",
-  "note": "서울시 문화행사 공식 안내(서울문화포털), 모모뉴스·경민일보 보도, 안테나숍 공식 SNS를 확인했어요(2026-10-20). 시음회 예약은 공식 인스타그램(@antennashop_seoul)에서 안내해요.",
-  "sources": [
-   "https://www.momonews.com/81643",
-   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159883&menuNo=200010"
   ]
  },
  {
