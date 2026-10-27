@@ -536,5 +536,60 @@
   "sources": [
    "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159779&menuNo=200010"
   ]
+ },
+ {
+  "gu": "성북구",
+  "title": "성북거리문화축제 다다페스타",
+  "set": {
+   "link": "https://korean.visitkorea.or.kr/kfes/detail/fstvlDetail.do?fstvlCntntsId=3b77b4cf-4945-4284-8f2d-bfd90216e522",
+   "image": "https://kfescdn.visitkorea.or.kr/kfes/upload/contents/db/3b77b4cf-4945-4284-8f2d-bfd90216e522_30.JPG"
+  },
+  "desc": "프로그램: 올해 처음 장위뉴타운(장월로37길 일대)에서 여는 제3회 거리문화축제\n· 메인무대: 여행스케치 개막 공연, 인디밴드·청소년 동아리 공연, 중식이밴드\n· 거리공연: 서커스, 동덕여대 학생 댄스\n· K-ARTS MARKET(한예종 청년 예술가 작품 전시·판매), 다다핸드마켓(수공예), 다다푸드마켓(먹거리)\n· 다다어린이마켓(어린이가 판매자로 참여), 놀이·체험 공간 다다랜드\n· 먹거리 부스는 8,000원 이하 가격상한제\n주최·주관: 성북구 · 성북문화재단\n문의: 02-6906-9298",
+  "note": "구청 보도(아시아경제·서울신문 10/20)와 한국관광공사 축제 안내를 확인했어요(2026-10-27). 출연진은 바뀔 수 있어요.",
+  "sources": [
+   "https://view.asiae.co.kr/article/2026102009581747500",
+   "https://go.seoul.co.kr/news/newsView.php?id=20261020500132",
+   "https://korean.visitkorea.or.kr/kfes/detail/fstvlDetail.do?fstvlCntntsId=3b77b4cf-4945-4284-8f2d-bfd90216e522"
+  ]
+ },
+ {
+  "gu": "영등포구",
+  "title": "한강 물빛 재즈 크루즈",
+  "set": {
+   "fee": "무료"
+  },
+  "desc": "프로그램: 한국 재즈 100주년을 맞아 여의도 한강공원 물빛무대에서 여는 무료 야외 재즈 공연\n· '한 편의 항해'를 주제로 미국·남미 재즈에서 한국 재즈까지 100년을 크루즈 항해처럼 구성\n· 출연(보도 기준): 드럼밥 밴드, 점보맘보(라틴재즈), 사자밴드\n주최·주관: 한국재즈협회\n문의: 02-6953-1633",
+  "note": "서울문화포털 공식 안내(일시·장소·무료)와 연합뉴스 보도(10/12)를 확인했어요(2026-10-27). 출연진은 보도 한 곳 기준이라 바뀔 수 있어요.",
+  "sources": [
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159926&menuNo=200010",
+   "https://supple.kr/news/cmv56oyei0089r6zcwpbu1rxe",
+   "https://koreajazz.co.kr/"
+  ]
+ },
+ {
+  "gu": "노원구",
+  "title": "서울아트북페어 2026",
+  "set": {
+   "fee": "무료"
+  },
+  "desc": "프로그램: 서울시립미술관과 유어마인드가 함께 여는 국내 최대 아트북 축제(18회)\n· 국내 204팀·해외 50팀, 254팀 제작자가 새 출판물·인쇄물·굿즈를 선보여요\n· 〈신간의 전당〉: 올해 처음 공개되는 신간 100권 이상 열람\n· 11/6(금) 〈2027 달력만들기〉: 참가팀 인쇄물을 한 장씩 골라 달력 완성\n· 북토크·워크숍·드로잉 퍼포먼스\n주최·주관: 서울시립미술관 · 유어마인드\n문의: 070-8821-8990",
+  "note": "서울문화포털 공식 안내 본문을 확인했어요(2026-10-27). 입장 마감은 종료 30분 전이에요(작년 기준).",
+  "sources": [
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159862&menuNo=200010",
+   "https://unlimited-edition.org/"
+  ]
+ },
+ {
+  "gu": "종로구",
+  "title": "온 가족 책 잔치",
+  "start_date": "2026-11-07",
+  "set": {
+   "link": "https://korean.visitkorea.or.kr/kfes/detail/fstvlDetail.do?fstvlCntntsId=9777bce9-2290-4da7-9815-112355acf0f3",
+   "image": "https://kfescdn.visitkorea.or.kr/kfes/upload/contents/db/9777bce9-2290-4da7-9815-112355acf0f3_14.jpg"
+  },
+  "note": "한국관광공사 축제 안내를 확인했어요(2026-10-27). 2013년부터 해마다 가을 정독도서관에서 열리는 서울시교육청 독서축제예요.",
+  "sources": [
+   "https://korean.visitkorea.or.kr/kfes/detail/fstvlDetail.do?fstvlCntntsId=9777bce9-2290-4da7-9815-112355acf0f3"
+  ]
  }
 ]
