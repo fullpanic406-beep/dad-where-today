@@ -6,7 +6,7 @@
   "set": {},
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=383"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159120&menuNo=200010"
   ],
   "desc": "- 2026 서울어텀페스타가장 깊은 계절, 가장 아름다운 무대가 펼쳐진다. 예술가에게는 무대를, 관객에게는 공연과 만나는 감동을,도시에는 공연예술로 물드는 가장 아름다운 계절을 선사된다. 서울어텀페스타는 서울 전역의 공연과 축제를 하나의 브랜드로 연결해도시 전체를 공연예술의 무대로 만드는 서울 대표 공연예술 축제이다. - 2026.9.18.(금) ~ 11.29.(일) 총 73일간 이어지는 서울 대표 공연예술축제"
  },
@@ -21,7 +21,7 @@
   },
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=535"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159627&menuNo=200010"
   ]
  },
  {
@@ -31,11 +31,11 @@
   "set": {
    "time": "오전 10:00~12:00, 오후 14:00~16:00 (1일 2회)",
    "fee": "무료 (단, 박물관 등 일부 내부 관람 시설의 경우 개별 입장료 부담)",
-   "link": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=396"
+   "link": "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=157700&menuNo=200010"
   },
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=396"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=157700&menuNo=200010"
   ]
  },
  {
@@ -49,7 +49,7 @@
   },
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=394"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=156879&menuNo=200010"
   ]
  },
  {
@@ -63,7 +63,7 @@
   },
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=394"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159264&menuNo=200010"
   ]
  },
  {
@@ -73,7 +73,7 @@
   "set": {},
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=353"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159593&menuNo=200010"
   ],
   "desc": "서울 미식의 고유한 가치를 전 세계에 알리는 글로벌 미식 축제로, '서울 미식 100선' 발표와 연계하여 셰프, 레스토랑, 전통시장이 함께 참여하는 다채로운 미식 경험을 제공 - (서울레스토랑 위크) 서울미식 100선 레스토랑, 전통시장 등 서울 전역의 핫플에서 행사기간 한정 특별 메뉴 및 할인 제공 - (서울미식마켓) 식탁에서 맛보고 이야기로 깊어지고 식재료의 시작까지 만나는'오늘의집밥"
  },
@@ -84,7 +84,7 @@
   "set": {},
   "note": "서울시 축제 사이트(펀서울)의 공식 안내를 확인했어요(2026-10-16). 일정·프로그램은 바뀔 수 있어요.",
   "sources": [
-   "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=601"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159663&menuNo=200010"
   ],
   "desc": "○ 일 정 : 2026. 10. 29.(목)~ 10. 31.(토) (3일간) ※ 미리정동야행: 26.10. 29.(목)/ 행사개막식 : 26. 10. 30.(금) ○ 장 소 : 정동 일대(덕수궁길, 정동길, 정동일대 역사문화시설 등)"
  },
@@ -195,7 +195,7 @@
   "note": "서울시 발표(뉴스핌 10/16)와 펀서울 안내를 확인했어요(2026-10-20). 원본 데이터는 기간으로 나오지만 실제 운영은 이틀이에요.",
   "sources": [
    "https://www.newspim.com/news/view/20261016001293",
-   "https://festival.seoul.go.kr/"
+   "https://culture.seoul.go.kr/culture/culture/cultureEvent/list.do?searchCate=FESTIVAL&menuNo=200010"
   ]
  },
  {

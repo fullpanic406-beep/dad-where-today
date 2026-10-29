@@ -174,28 +174,12 @@ async function main() {
     const e = events[i];
     if (e.category === 'festival' && !descs[e.id] && !e.image && !e.link) { delete descs[e.id]; events.splice(i, 1); festDrop.내용없음++; }
   }
-  const linkAlive = async url => { // 404·410·5xx·접속 실패는 불가, 로봇 차단(401·403·405·429)은 열리는 것으로 본다
-    for (let t = 0; t < 2; t++) {
-      try {
-        const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(10000), headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36' } });
-        await r.body?.cancel();
-        if (r.status !== 404 && r.status !== 410 && r.status < 500) return true;
-      } catch (err) {
-        // 인증서 체인·HTTP 형식 오류는 브라우저에서는 열리는 사이트가 많아 열리는 것으로 본다
-        const code = String(err.cause?.code ?? '');
-        if (/^(UNABLE_TO|CERT_|DEPTH_ZERO|SELF_SIGNED|ERR_TLS|HPE_)/.test(code) || /protocol/.test(String(err.cause?.message ?? ''))) return true;
-      }
-    }
-    return false;
-  };
-  const fests = events.filter(e => e.category === 'festival' && e.link), dead = new Set();
-  for (let i = 0; i < fests.length; i += 8) {
-    await Promise.all(fests.slice(i, i + 8).map(async e => { if (!(await linkAlive(e.link))) dead.add(e.id); }));
-  }
-  if (fests.length && dead.size / fests.length > 0.5) { // 절반 넘게 실패하면 네트워크 문제로 보고 삭제하지 않는다
-    console.log(`[ingest] 경고 — 축제 링크 ${fests.length}건 중 ${dead.size}건이 안 열려 점검을 건너뜀`);
-  } else {
-    for (let i = events.length - 1; i >= 0; i--) if (dead.has(events[i].id)) { console.log(`[ingest] 링크 불가 축제 삭제: ${events[i].title} ${events[i].link}`); delete descs[events[i].id]; events.splice(i, 1); festDrop.링크불가++; }
+  // 링크가 열리지 않는 축제: 서버(해외 IP)에서는 국내 사이트가 막혀 점검이 안 되므로, 이 컴퓨터에서 `node scripts/check-festival-links.js`로 만든 data/dead-links.json 의 주소만 삭제한다
+  const deadFile = path.join(ROOT, 'data', 'dead-links.json');
+  const deadLinks = new Set(existsSync(deadFile) ? (JSON.parse(readFileSync(deadFile, 'utf8')).links ?? []).map(x => x.link) : []);
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.category === 'festival' && e.link && deadLinks.has(e.link)) { console.log(`[ingest] 링크 불가 축제 삭제: ${e.title} ${e.link}`); delete descs[e.id]; events.splice(i, 1); festDrop.링크불가++; }
   }
   if (festDrop.내용없음 || festDrop.링크불가) console.log(`[ingest] 축제 삭제: 내용 없음 ${festDrop.내용없음}건, 링크 불가 ${festDrop.링크불가}건`);
 
