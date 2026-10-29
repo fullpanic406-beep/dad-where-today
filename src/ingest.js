@@ -168,6 +168,37 @@ async function main() {
   // 직접 확인해 적어 둔 보강 내용(data/enrich.json)을 덧씌운다
   applyEnrich(events, descs, path.join(ROOT, 'data', 'enrich.json'));
 
+  // 축제: 설명·사진·링크가 하나도 없는 행사, 링크가 열리지 않는 행사는 삭제한다
+  const festDrop = { 내용없음: 0, 링크불가: 0 };
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.category === 'festival' && !descs[e.id] && !e.image && !e.link) { delete descs[e.id]; events.splice(i, 1); festDrop.내용없음++; }
+  }
+  const linkAlive = async url => { // 404·410·5xx·접속 실패는 불가, 로봇 차단(401·403·405·429)은 열리는 것으로 본다
+    for (let t = 0; t < 2; t++) {
+      try {
+        const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(10000), headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36' } });
+        await r.body?.cancel();
+        if (r.status !== 404 && r.status !== 410 && r.status < 500) return true;
+      } catch (err) {
+        // 인증서 체인·HTTP 형식 오류는 브라우저에서는 열리는 사이트가 많아 열리는 것으로 본다
+        const code = String(err.cause?.code ?? '');
+        if (/^(UNABLE_TO|CERT_|DEPTH_ZERO|SELF_SIGNED|ERR_TLS|HPE_)/.test(code) || /protocol/.test(String(err.cause?.message ?? ''))) return true;
+      }
+    }
+    return false;
+  };
+  const fests = events.filter(e => e.category === 'festival' && e.link), dead = new Set();
+  for (let i = 0; i < fests.length; i += 8) {
+    await Promise.all(fests.slice(i, i + 8).map(async e => { if (!(await linkAlive(e.link))) dead.add(e.id); }));
+  }
+  if (fests.length && dead.size / fests.length > 0.5) { // 절반 넘게 실패하면 네트워크 문제로 보고 삭제하지 않는다
+    console.log(`[ingest] 경고 — 축제 링크 ${fests.length}건 중 ${dead.size}건이 안 열려 점검을 건너뜀`);
+  } else {
+    for (let i = events.length - 1; i >= 0; i--) if (dead.has(events[i].id)) { console.log(`[ingest] 링크 불가 축제 삭제: ${events[i].title} ${events[i].link}`); delete descs[events[i].id]; events.splice(i, 1); festDrop.링크불가++; }
+  }
+  if (festDrop.내용없음 || festDrop.링크불가) console.log(`[ingest] 축제 삭제: 내용 없음 ${festDrop.내용없음}건, 링크 불가 ${festDrop.링크불가}건`);
+
   // 체험객·관람객 얼굴이 나온 사진(초상권)은 data/image-exclude.json 의 주소 목록으로 걸러 기본 이미지로 대체한다
   const excludeImg = existsSync(path.join(ROOT, 'data', 'image-exclude.json')) ? new Set(JSON.parse(readFileSync(path.join(ROOT, 'data', 'image-exclude.json'), 'utf8'))) : new Set();
   let imgDropped = 0;
