@@ -340,6 +340,12 @@ async function renderHome() {
 
   // 아빠 PICK 선정 — ① 축제 우선 ② 가까운 일정 우선(이번 주말 단기 행사 → 2주 안에 시작 → 오래 진행 중) ③ 아이와 가기 좋은 순, 날짜 빠른 순
   // (예약이 끝난 행사는 제외, 최대 5개)
+  // 같은 기관·같은 날짜의 같은 프로그램인지: 제목에서 대상(유아·초등·학년·반·기수·대면 여부)만 지워 비교
+  const sameProgramKey = e => [e.gu, e.place, e.start_date, e.end_date, e.title
+    .replace(/(초등학교|초등|초|중등|중학교|중|고등|고)?\s*\d+\s*[~\-,]\s*\d+\s*학년|(초등학교|초등|초|중등|중|고등|고)\s*\d+\s*학년|[1-6]\s*학년|(저|중|고)학년|(초|중|고)\d(~\d)?/g, '')
+    .replace(/[A-Z가-힣]?[A-D]반|\d+반|(어린이|유아|초등|청소년|성인|가족)반?/g, '').replace(/\d+\s*기(?=[\s)\]>]|$)/g, '')
+    .replace(/비대면|대면|학급|단체|동반|대상/g, '')
+    .replace(/[\s\[\]()「」<>〈〉〔〕《》·\-_:：,.!?'"‘’“”~*★☆/［］]/g, '')].join('|');
   const closed = e => e.status && e.status !== '접수중' && e.status !== '안내중';
   const spanDays = e => (Date.parse(e.end_date) - Date.parse(e.start_date)) / 864e5;
   const nearGroup = e => (e.start_date <= w1 && e.end_date >= w0 && spanDays(e) <= 7 ? 0 : e.start_date > w1 ? 1 : 2);
@@ -351,6 +357,7 @@ async function renderHome() {
       || b.family - a.family
       || (nearGroup(a) === 2 ? a.end_date.localeCompare(b.end_date) : a.start_date.localeCompare(b.start_date))
       || spanDays(a) - spanDays(b))
+    .filter((e, _, all) => { const k = sameProgramKey(e); return all.find(o => sameProgramKey(o) === k) === e; }) // 대상(유아·초등 등)만 다른 같은 프로그램은 앞의 하나만
     .slice(0, 5)
     .sort(byArea); // 고르는 기준은 그대로(축제 → 가까운 일정), 넘어가는 순서만 구 → 동
 
