@@ -20,3 +20,7 @@ tour_api*.txt
 
 # 상세 정보 캐시(호출 한도 절약)
 .cache/
+
+# 정식 출시용 업로드 키(실수로 올라가지 않도록)
+upload.keystore*
+*.jks

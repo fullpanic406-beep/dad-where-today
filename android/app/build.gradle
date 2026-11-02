@@ -27,8 +27,22 @@ android {
             keyPassword 'android'
         }
     }
+    // 정식 출시용 업로드 키: 빌드 서버의 비밀 값(환경 변수)이 있을 때만 쓴다. 키 파일은 저장소에 두지 않는다.
+    if (System.getenv('RELEASE_KEYSTORE_PATH')) {
+        signingConfigs {
+            release {
+                storeFile file(System.getenv('RELEASE_KEYSTORE_PATH'))
+                storePassword System.getenv('RELEASE_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('RELEASE_KEY_ALIAS')
+                keyPassword System.getenv('RELEASE_KEYSTORE_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv('RELEASE_KEYSTORE_PATH')) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

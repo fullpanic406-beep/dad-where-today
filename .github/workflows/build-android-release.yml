@@ -1,0 +1,55 @@
+name: 안드로이드 정식 출시용 AAB 빌드
+
+on:
+  workflow_dispatch:   # Actions 탭에서 수동 실행
+
+permissions:
+  contents: read
+
+jobs:
+  aab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: 배포된 데이터 받기 (앱 안 스냅샷)
+        run: node scripts/fetch-live-data.js "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - name: 앱이 읽을 데이터 주소 설정 (GitHub Pages)
+        run: node scripts/set-data-base.js "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - run: npx cap sync android
+
+      - name: 업로드 키 복원
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "ANDROID_KEYSTORE_BASE64 시크릿이 없습니다"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+
+      - name: 릴리스 AAB 빌드
+        working-directory: android
+        env:
+          RELEASE_KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abba-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
