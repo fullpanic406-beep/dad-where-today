@@ -329,5 +329,89 @@
       "https://pintl.so/seoul-dongdaemungu-20261120",
       "https://ottoke.co.kr/events"
     ]
+  },
+  {
+    "gu": "중구",
+    "title": "SSE PBR FEST",
+    "start_date": "2026-10-31",
+    "set": {
+      "link": "https://ddpshowroom.sba.kr/menu/news/view?idx=202",
+      "is_free": 1,
+      "fee": "무료"
+    },
+    "desc": "프로그램: 독립 출판사이자 음반 레이블 쎄 프로젝트(SSE PROJECT)가 18년 동안 낸 책과 음반을 한자리에서 볼 수 있는 팝업 & 페스티벌이에요.\n· 아카이브 전시: 아트북·진(Zine)·음반을 직접 보고 들어요.\n· 라이브·토크: 국내 인디 뮤지션 공연과 이야기 시간이 있어요.\n· 워크숍·사인회: 아티스트와 함께하는 프로그램이 이어져요.",
+    "note": "서울문화포털 행사 상세 본문 확인(2026-11-06).",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160059&menuNo=200010"
+    ]
+  },
+  {
+    "gu": "성동구",
+    "title": "성동 미래직업체험",
+    "start_date": "2026-11-07",
+    "set": {
+      "link": "https://www.sd.go.kr/main/selectBbsNttView.do?bbsNo=183&nttNo=362384&key=1472"
+    },
+    "desc": "프로그램: 미래기술을 활용한 직업 체험과 온마을체험학습장 인기 프로그램을 한꺼번에 즐기는 축제예요.\n· 테마파크 체험: 범퍼카, VR 버스\n· 공연: 휴머노이드 로봇쇼, 버블쇼\n· 체험 부스: 미래직업·온마을체험학습\n· 유의: 모든 체험은 선착순이고 재료가 떨어지면 일찍 끝날 수 있어요. 주차 공간이 좁아 대중교통을 권해요.\n문의: 02-2286-5849",
+    "note": "서울문화포털 행사 상세 본문 확인(2026-11-06). 참가비는 유료이며 금액은 공지에 없었어요.",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160101&menuNo=200010"
+    ]
+  },
+  {
+    "gu": "중구",
+    "title": "ㅊㅊ-하다 페스티벌",
+    "start_date": "2026-11-10",
+    "set": {
+      "link": "https://booking.naver.com/booking/12/bizes/1510915"
+    },
+    "desc": "프로그램: 청년 예술가들이 꾸미는 전통공연예술 축제로, 날마다 분야가 달라요.\n· 11/10(화) 19:00 성악\n· 11/11(수) 19:00 기악\n· 11/12(목) 19:00 무용\n· 11/13(금) 19:00 연희\n· 대상: 만 7세 이상\n문의: 070-5001-0926",
+    "note": "서울문화포털 행사 상세 본문 확인(2026-11-06).",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160100&menuNo=200010"
+    ]
+  },
+  {
+    "gu": "영등포구",
+    "title": "창의예술주간 둥둥제",
+    "start_date": "2026-11-13",
+    "set": {
+      "link": "https://www.instagram.com/p/DfHQGbpnc0C/?img_index=1"
+    },
+    "desc": "프로그램: '잠들면 열리는 상상의 섬'을 주제로 YDP창의예술교육센터 전체가 꿈속 세계로 바뀌는 창의예술주간이에요.\n· 참여 신청은 안내 페이지에서 해요.\n· 운영: 화~금 10:30~20:00, 토 10:30~19:00\n문의: 02-3667-9060",
+    "note": "서울문화포털 행사 상세 본문 확인(2026-11-06). 세부 프로그램은 공지에 없어요.",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160104&menuNo=200010"
+    ]
+  },
+  {
+    "gu": "구로구",
+    "title": "K-콘텐츠 서울여행주간",
+    "start_date": "2026-11-14",
+    "set": {
+      "link": "https://seoulkcontent.com/",
+      "target": "방한 외국인 관광객"
+    },
+    "desc": "프로그램: 서울 관광 체험 프로그램을 일주일 동안 운영해요. 방한 외국인 관광객이 대상이고 사전신청이 필요해요.\n· 11/14~15 멜론뮤직어워드 연계 홍보 팝업(고척스카이돔)\n· 11/16 전통공예 체험 클래스(북촌전통공예체험관)\n· 11/17 K-메이크업 체험 클래스(아모레용산)\n· 11/18 서울촬영지 도슨트 투어, 서울 나이트 시티 스냅 투어(DDP 권역)\n· 11/19 K-푸드 체험 클래스(오뚜기 오키친스튜디오)\n· 11/20 14시 K-팝 버스킹·K-댄스 체험(DDP 어울림광장)\n문의: 02-3789-4184",
+    "note": "서울문화포털 행사 상세 본문 확인(2026-11-06). 외국인 관광객 대상 행사라 내국인 참여는 프로그램별로 확인이 필요해요.",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160109&menuNo=200010"
+    ]
+  },
+  {
+    "gu": "중구",
+    "title": "영주 사과축제",
+    "start_date": "2026-11-13",
+    "set": {
+      "link": "https://yctf.or.kr/aspf",
+      "place": "서울시 청계광장"
+    },
+    "desc": "프로그램: 경북 영주의 사과를 서울에서 만나는 축제예요. 영주에서는 10/30~11/1에 먼저 열렸고, 서울에서는 청계광장에서 사흘간 열려요.\n· 일시: 11/13(금)~11/15(일)",
+    "note": "영주문화관광재단 공식 안내, 영주시민신문, 경북일보 등에서 서울 일정·장소를 확인했어요(2026-11-06). 세부 프로그램은 공식 안내에서 확인해 주세요.",
+    "sources": [
+      "https://yctf.or.kr/aspf",
+      "https://www.yjinews.com",
+      "https://www.kyongbuk.co.kr"
+    ]
   }
 ]
