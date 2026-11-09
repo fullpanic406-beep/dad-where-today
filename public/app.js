@@ -287,11 +287,15 @@ const groupBox = (title, count, rows) => `<div class="gbox"><div class="grp"><b>
 // 선택한 구의 행사를 동별로. 한 묶음 안에서는 이 기간에 시작하는 행사를 날짜순으로, 이미 진행 중이던 장기 행사는 뒤에 둔다
 function groupedEvents(events) {
   const ongoing = e => e.start_date < S.from;
-  const scan = [...events].sort((a, b) => ongoing(a) - ongoing(b)
-    || (ongoing(a) ? a.end_date.localeCompare(b.end_date) : a.start_date.localeCompare(b.start_date)) || koSort(a.title, b.title));
+  const sorter = (a, b) => ongoing(a) - ongoing(b)
+    || (ongoing(a) ? a.end_date.localeCompare(b.end_date) : a.start_date.localeCompare(b.start_date)) || koSort(a.title, b.title);
+  // 축제는 동 묶음에서 빼서 맨 위에 따로 보여 준다(없으면 이 묶음은 나오지 않는다)
+  const fest = events.filter(e => e.category === 'festival').sort((a, b) => byArea(a, b) || sorter(a, b));
+  const scan = events.filter(e => e.category !== 'festival').sort(sorter);
   const g = groupBy(scan, e => e.dong || '');
   const keys = [...g.keys()].sort((a, b) => (a === '') - (b === '') || koSort(a, b)); // '그 밖의 지역'은 맨 뒤
-  return keys.map(k => groupBox(esc(k || '그 밖의 지역'), `${g.get(k).length}건`, g.get(k).map(rowHtml).join(''))).join('');
+  const festBox = fest.length ? groupBox('🎪 축제', `${fest.length}건`, fest.map(rowHtml).join('')) : '';
+  return festBox + keys.map(k => groupBox(esc(k || '그 밖의 지역'), `${g.get(k).length}건`, g.get(k).map(rowHtml).join(''))).join('');
 }
 // 가볼 곳: 서울 → 경기, 내 구가 맨 위, 구(시) › 동 순. '가까운 순'이면 묶지 않고 거리순
 function groupedPlaces(list) {
