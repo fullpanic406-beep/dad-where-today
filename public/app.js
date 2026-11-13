@@ -23,6 +23,7 @@ const P = {
   chevR: '<path d="M9 5l7 7-7 7"/>',
   heart: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
   share: '<path d="M12 15V4M8 8l4-4 4 4M5 12v7h14v-7"/>',
+  radar: '<circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="9" stroke-dasharray="2.5 2.5"/>',
   pin: '<path d="M12 21s-6-5.5-6-10.5a6 6 0 0 1 12 0C18 15.5 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
@@ -102,6 +103,7 @@ const S = {
   saved: new Set(store.get('saved', [])),
   cache: new Map(), meta: null, mapData: null, weather: null,
   hosp: new Set(),   // 병원 탭 필터(now·hol·sun·sat·night 중 하나)
+  nearWhen: 'weekend', nearWide: false, nearFamily: false, nearFree: false, nearOpen: new Set(),   // 주변 탭: 기간·범위(한 겹 더)·필터·펼친 구
 };
 // 가까운 순 기준점: 내 위치를 켜지 않았다면 선택한 구의 중심
 const nearPoint = () => S.near ?? (() => { const c = S.mapData?.districts.find(x => x.name === S.gu); return c ? { lat: c.lat, lng: c.lng, label: `${S.gu} 중심` } : null; })();
@@ -392,6 +394,80 @@ async function renderHome() {
     ${!wk.events.length && !kc.events.length && !pl.places.length ? `<section class="sec">${emptyHtml('지금 등록된 행사가 없어요', `${esc(S.gu)}의 행사를 아직 찾지 못했어요.<br>다른 지역을 골라 보세요.`)}</section>` : ''}
     <p class="foot-note">${updatedLabel()}<br>행사 정보 출처: 서울 열린데이터광장(문화행사), 서울시 공공서비스예약, 우리동네 키움포털, 전국문화축제표준데이터, 한국관광공사<br>일정과 요금은 바뀔 수 있으니 방문 전에 확인해 주세요</p>`;
   setupCarousel();
+}
+
+/* ---------- 주변: 내 구와 맞닿은 구들의 행사를 한 화면에 모아 보기 ---------- */
+// seoul-map.json 경계선에서 맞닿은 구를 뽑아 둔 표(한강을 사이에 둔 구도 경계가 강 가운데라 이웃으로 친다)
+const NEIGHBORS = {"강남구":["광진구","서초구","성동구","송파구","용산구"],"강동구":["광진구","송파구"],"강북구":["노원구","도봉구","성북구"],"강서구":["마포구","양천구","영등포구"],"관악구":["구로구","금천구","동작구","서초구"],"광진구":["강남구","강동구","동대문구","성동구","송파구","중랑구"],"구로구":["관악구","금천구","양천구","영등포구"],"금천구":["관악구","구로구"],"노원구":["강북구","도봉구","성북구","중랑구"],"도봉구":["강북구","노원구"],"동대문구":["광진구","성동구","성북구","종로구","중구","중랑구"],"동작구":["관악구","서초구","영등포구","용산구"],"마포구":["강서구","서대문구","영등포구","용산구","은평구","중구"],"서대문구":["마포구","은평구","종로구","중구"],"서초구":["강남구","관악구","동작구","용산구"],"성동구":["강남구","광진구","동대문구","용산구","종로구","중구"],"성북구":["강북구","노원구","동대문구","종로구","중랑구"],"송파구":["강남구","강동구","광진구"],"양천구":["강서구","구로구","영등포구"],"영등포구":["강서구","관악구","구로구","동작구","마포구","양천구","용산구"],"용산구":["강남구","동작구","마포구","서초구","성동구","영등포구","중구"],"은평구":["마포구","서대문구","종로구"],"종로구":["동대문구","서대문구","성북구","은평구","중구"],"중구":["동대문구","마포구","서대문구","성동구","용산구","종로구"],"중랑구":["광진구","노원구","동대문구","성북구"]};
+const NEAR_WHEN = [['weekend', '이번 주말'], ['today', '오늘'], ['next', '다음 주말']];
+function nearRange() {
+  const [a, b] = weekendOf(TODAY);
+  return S.nearWhen === 'today' ? [TODAY, TODAY] : S.nearWhen === 'next' ? weekendOf(addDays(b, 1)) : [a, b];
+}
+// 내 구 + 맞닿은 구(+ '한 겹 더'면 그 바깥 구)
+function nearRings() {
+  const ring1 = NEIGHBORS[S.gu] ?? [];
+  const ring2 = S.nearWide ? [...new Set(ring1.flatMap(g => NEIGHBORS[g] ?? []))].filter(g => g !== S.gu && !ring1.includes(g)) : [];
+  return { ring1, ring2 };
+}
+async function renderNear() {
+  if (!S.mapData) S.mapData = await (await fetch('seoul-map.json')).json();
+  const { viewBox, districts } = S.mapData;
+  const D = Object.fromEntries(districts.map(d => [d.name, d])), me = D[S.gu];
+  const { ring1, ring2 } = nearRings();
+  const dist = g => (me && D[g] ? Math.hypot(D[g].cx - me.cx, D[g].cy - me.cy) : 0);
+  const gus = [S.gu, ...[...ring1, ...ring2].sort((a, b) => dist(a) - dist(b))];   // 내 구 → 가까운 구 순
+  const [from, to] = nearRange();
+  const p = { from, to, family: S.nearFamily ? 1 : '', free: S.nearFree ? 1 : '' };
+  const res = await Promise.all(gus.map(g => api('/api/events', { ...p, gu: g }).catch(() => ({ events: [], total: 0 }))));
+  if (S.tab !== 'near') return;   // 불러오는 사이 다른 탭으로 감
+  const byGu = new Map(gus.map((g, i) => [g, res[i].events]));
+  const total = res.reduce((s, r) => s + (r.total ?? r.events.length), 0);
+  const fest = res.flatMap(r => r.events).filter(e => e.category === 'festival')
+    .sort((a, b) => gus.indexOf(a.gu) - gus.indexOf(b.gu) || a.start_date.localeCompare(b.start_date) || koSort(a.title, b.title));
+  const whenLabel = NEAR_WHEN.find(x => x[0] === S.nearWhen)[1];
+
+  // 작은 지도: 내 구(진하게) · 맞닿은 구 · 한 겹 더(옅게)
+  const tone = n => (n === S.gu ? 'me' : ring1.includes(n) ? 'r1' : ring2.includes(n) ? 'r2' : '');
+  const cnt = g => byGu.get(g)?.length ?? 0;
+  // 보이는 범위를 내 구·주변 구 둘레로 좁혀 크게 보여 준다
+  const xs = [], ys = [];
+  for (const d of districts) if (tone(d.name)) for (const m of d.d.matchAll(/(-?[\d.]+)[ ,](-?[\d.]+)/g)) { xs.push(+m[1]); ys.push(+m[2]); }
+  const pad = 14, vb = xs.length ? [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + pad * 2, Math.max(...ys) - Math.min(...ys) + pad * 2].map(v => v.toFixed(1)).join(' ') : viewBox;
+  const mini = `<div class="near-map"><svg viewBox="${vb}" style="font-size:${(xs.length ? (Math.max(...xs) - Math.min(...xs)) / 16 : 15).toFixed(1)}px" role="img" aria-label="${esc(S.gu)} 주변 지도">
+    ${districts.map(d => `<path class="${tone(d.name)}" d="${d.d}" fill-rule="evenodd"/>`).join('')}
+    ${districts.filter(d => tone(d.name)).map(d => `<text class="${tone(d.name)}" x="${d.cx}" y="${d.cy - 1}">${d.name.replace(/구$/, '')}<tspan class="cnt" x="${d.cx}" dy="1.1em">${cnt(d.name) ? cnt(d.name) + '건' : ''}</tspan></text>`).join('')}
+  </svg></div>`;
+
+  const CAP = 5;
+  const guBox = g => {
+    const list = byGu.get(g).filter(e => e.category !== 'festival');
+    if (!list.length) return '';
+    const open = S.nearOpen.has(g), shown = open ? list : list.slice(0, CAP);
+    const more = list.length > CAP ? `<button class="near-more" data-nmore="${esc(g)}">${open ? '접기' : `${esc(g)} ${list.length - CAP}건 더 보기`}</button>` : '';
+    const label = g === S.gu ? `🏠 ${esc(g)} <small>우리 동네</small>` : `${esc(g)} <small>${ring1.includes(g) ? '바로 옆' : '한 겹 더'}</small>`;
+    return groupBox(label, `${list.length}건`, shown.map(rowHtml).join('') + more);
+  };
+  const boxes = gus.map(guBox).join('');
+
+  view.innerHTML = `
+    ${tabHead(`${esc(S.gu)}와 주변 ${gus.length - 1}개 구`, `${whenLabel} 행사 <em>${total}</em>건 모였어요`, 'i-weekend')}
+    <section class="sec">
+      <div class="seg" style="margin-top:0">${NEAR_WHEN.map(([k, t]) => `<button class="${S.nearWhen === k ? 'on' : ''}" data-nwhen="${k}">${t}</button>`).join('')}</div>
+      <p class="sec-sub" style="margin:8px 0 10px">${rangeLabel(from, to)} · 다른 지역을 일일이 고르지 않아도 돼요</p>
+      ${mini}
+      <div class="chips" style="margin-top:10px">
+        <button class="chip ${S.nearWide ? '' : 'on'}" data-nwide="0">바로 옆 구까지</button><button class="chip ${S.nearWide ? 'on' : ''}" data-nwide="1">한 겹 더 넓게</button>
+        <button class="chip ${S.nearFamily ? 'on' : ''}" data-nf="nearFamily">아이와</button><button class="chip ${S.nearFree ? 'on' : ''}" data-nf="nearFree">무료</button>
+      </div>
+    </section>
+    ${fest.length ? `<section class="sec"><div class="sec-head"><div><h2>🎪 주변 축제</h2><p class="sec-sub">${whenLabel}에 열리는 축제 ${fest.length}건 · 가까운 구부터</p></div></div>
+      <div class="rail">${fest.map(pcardHtml).join('')}</div></section>` : ''}
+    <section class="sec">
+      ${boxes ? `<div class="result-head"><h2>구별로 모아 보기</h2><span>가까운 구부터</span></div>${boxes}`
+        : emptyHtml('조건에 맞는 행사가 없어요', '기간을 바꾸거나 범위를 넓혀 보세요.')}
+    </section>
+    <p class="foot-note">행사 정보는 서울 25개 구 기준이에요. 내 동네는 위의 지역 버튼(지도 탭)에서 바꿀 수 있어요.</p>`;
 }
 
 /* ---------- 캘린더 ---------- */
@@ -868,7 +944,7 @@ async function share(id) {
 }
 
 /* ---------- 헤더·탭·렌더 ---------- */
-const TABS = [['home', 'home', '홈'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '지도'], ['hosp', 'hospital', '병원'], ['saved', 'heart', '저장']];
+const TABS = [['home', 'home', '홈'], ['near', 'radar', '주변'], ['cal', 'calendar', '캘린더'], ['places', 'compass', '가볼 곳'], ['map', 'map', '지도'], ['hosp', 'hospital', '병원'], ['saved', 'heart', '저장']];
 function renderChrome() {
   $('#regionBtn').innerHTML = `${I('pin')}${esc(S.gu)}`;
   $('#searchBtn').innerHTML = I('search');
@@ -885,7 +961,7 @@ async function render(keepScroll = true) {
   renderChrome();
   if (!keepScroll && S.tab !== 'saved') view.innerHTML = skeleton(S.tab); // 탭·지역을 바꿀 때 빈 화면 대신 뼈대
   try {
-    await ({ home: renderHome, cal: renderCal, places: renderPlaces, map: renderMap, hosp: renderHosp, saved: renderSaved }[S.tab])();
+    await ({ home: renderHome, near: renderNear, cal: renderCal, places: renderPlaces, map: renderMap, hosp: renderHosp, saved: renderSaved }[S.tab])();
   } catch (err) {
     console.error(err);
     view.innerHTML = `<section class="sec">${emptyHtml('불러오지 못했어요', '서버 연결을 확인하고 다시 시도해 주세요.')}</section>`;
@@ -946,6 +1022,10 @@ document.addEventListener('click', e => {
   const ps = t.closest('[data-psort]'); if (ps) { S.placeSort = ps.dataset.psort; return render(); }
   const pk = t.closest('[data-pkind]'); if (pk) { S.placeKind = pk.dataset.pkind; return render(); }
   const pr = t.closest('[data-pregion]'); if (pr) { S.placeRegion = pr.dataset.pregion; return render(); }
+  const nw = t.closest('[data-nwhen]'); if (nw) { S.nearWhen = nw.dataset.nwhen; return render(); }
+  const nd = t.closest('[data-nwide]'); if (nd) { S.nearWide = nd.dataset.nwide === '1'; return render(); }
+  const nf = t.closest('[data-nf]'); if (nf) { S[nf.dataset.nf] = !S[nf.dataset.nf]; return render(); }
+  const nm = t.closest('[data-nmore]'); if (nm) { const g = nm.dataset.nmore; S.nearOpen.has(g) ? S.nearOpen.delete(g) : S.nearOpen.add(g); return render(); }
   const card = t.closest('[data-id]'); if (card) return openDetail(card.dataset.id);
 
   const kw = t.closest('[data-kw]');
@@ -1081,7 +1161,7 @@ new MutationObserver(syncBars).observe($('#app'), { subtree: true, attributes: t
   const [meta, map] = await Promise.all([api('/api/meta').catch(() => null), fetch('seoul-map.json').then(r => r.json()).catch(() => null), loadWeather()]);
   S.meta = meta; S.mapData = map;
   const qs = new URLSearchParams(location.search);
-  if (['home', 'cal', 'places', 'map', 'hosp', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
+  if (['home', 'near', 'cal', 'places', 'map', 'hosp', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
   if (qs.get('kind') in KIND) S.placeKind = qs.get('kind');
   if (['서울', '경기'].includes(qs.get('region'))) S.placeRegion = qs.get('region');
   await render(false);
