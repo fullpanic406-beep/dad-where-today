@@ -17,6 +17,7 @@ const getJson = async url => {
 };
 
 export const loadMeta = () => once('meta', () => getJson('data/meta.json'));
+export const loadWeatherFile = () => once('weather', () => getJson('data/weather.json'));   // 기상청 예보(src/weather.js 가 3시간마다 만든다)
 export const loadIndex = () => once('index', () => getJson('data/index.json'));
 export const loadGu = gu => once('gu:' + gu, () => getJson(`data/gu/${encodeURIComponent(gu)}.json`));
 export async function loadAll() {

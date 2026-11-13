@@ -55,6 +55,14 @@ jobs:
           HOSP_API_KEY: ${{ secrets.HOSP_API_KEY }}
         run: node src/hospitals.js
 
+      # 서울 날씨(기상청 단기·중기예보). 실패하면 이전 배포 파일을 그대로 쓴다. 3시간마다 도는 weather.yml 도 같은 일을 한다.
+      - name: 날씨 수집 (기상청)
+        continue-on-error: true
+        env:
+          KMA_API_KEY: ${{ secrets.KMA_API_KEY }}
+          HOSP_API_KEY: ${{ secrets.HOSP_API_KEY }}
+        run: node src/weather.js
+
       # 체험객·관람객 얼굴이 나온 사진(초상권)을 걸러 기본 이미지로 바꾼다. 검사 결과는 .cache 에 이어 쓰므로 새 이미지만 내려받는다.
       # 감지가 실패해도 수집 결과는 그대로 배포되지 않도록(사진이 그대로 나가지 않게) 이 단계가 실패하면 중단한다.
       - uses: actions/setup-python@v5

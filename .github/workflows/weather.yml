@@ -1,0 +1,46 @@
+name: 날씨 갱신 (기상청)
+
+# 행사 수집 없이 날씨 파일만 새로 만들어 배포한다. 행사·장소 데이터는 지금 배포된 것을 그대로 받아 쓴다(공공 API 호출 한도를 쓰지 않음).
+on:
+  schedule:
+    - cron: '25 */3 * * *'   # 3시간마다(단기예보 발표 02·05·08…시 직후에 맞춰 KST 기준 x시 25분)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 지금 배포된 데이터 받기
+        run: node scripts/fetch-live-data.js "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+      - name: 날씨 수집 (기상청)
+        env:
+          KMA_API_KEY: ${{ secrets.KMA_API_KEY }}
+          HOSP_API_KEY: ${{ secrets.HOSP_API_KEY }}
+        run: node src/weather.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

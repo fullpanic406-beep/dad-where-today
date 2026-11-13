@@ -31,4 +31,5 @@ for (const rel of ['meta.json', 'places.json', ...gu.flatMap(g => [`gu/${encodeU
 }
 // 소아과 병·의원(구별) — 처음 배포 전에는 없을 수 있으므로 못 받아도 넘어간다. 수집이 일시 실패한 날 이전 데이터를 이어 쓰는 용도도 겸한다.
 for (const g of gu) { try { save(`hospitals/${encodeURIComponent(g)}.json`, await get(`hospitals/${encodeURIComponent(g)}.json`)); n++; } catch { /* 선택 */ } }
+try { save('weather.json', await get('weather.json')); n++; } catch { /* 날씨(선택): 기상청 수집이 실패한 날 이전 예보를 이어 쓴다 */ }
 console.log(`[live-data] ${base}data/ 에서 ${n}개 파일을 받았습니다`);

@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { clearCache, km, loadMeta, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js';
+import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -117,13 +117,17 @@ const modeOf = () => {
 };
 function setRange(from, to) { S.from = from; S.to = to; S.anchor = from; }
 
-/* ---------- 날씨 (Open-Meteo, 키 불필요) ---------- */
+/* ---------- 날씨: 기상청 단기·중기예보(data/weather.json). 파일이 아직 없을 때만 Open-Meteo 로 대신한다 ---------- */
 const wxIcon = c => c === 0 ? 'sun' : c <= 2 ? 'cloudsun' : c <= 48 ? 'cloud' : c <= 67 ? 'rain'
   : c <= 77 ? 'snow' : c <= 82 ? 'rain' : c <= 86 ? 'snow' : 'bolt';
 // 아이와 나가 노는 시간(10:00~18:00)의 시간대별 예보만 본다.
 // 하루 최대 강수확률은 새벽·밤 값이 섞여 우천 판단에 부정확해서 쓰지 않는다.
 const PLAY_FROM = 10, PLAY_TO = 18;
 async function loadWeather() {
+  try {
+    const f = await loadWeatherFile();
+    if (f?.days && Object.keys(f.days).length) { S.weather = f.days; return; }
+  } catch { /* 아직 기상청 파일이 없음 → 아래 대체 */ }
   try {
     const ac = new AbortController(); setTimeout(() => ac.abort(), 2500);   // 날씨가 늦으면 기다리지 않고 날씨 없이 연다
     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&hourly=precipitation_probability,precipitation,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=16', { signal: ac.signal });
@@ -1157,9 +1161,15 @@ new MutationObserver(syncBars).observe($('#app'), { subtree: true, attributes: t
   view.addEventListener('scroll', () => $('.top').classList.toggle('scrolled', view.scrollTop > 4), { passive: true });
   setupPullRefresh(); syncBars();
   const splash = startSplash();
+  let closed = false; const closeSplash = () => { if (!closed) { closed = true; splash.finish(); } };
+  setTimeout(closeSplash, 8000);   // 무엇이 늦어도 8초 뒤엔 로딩 화면을 닫는다
   renderChrome();
   view.innerHTML = `<div class="loading"><img src="img/logo.png" alt="">갈 곳을 찾는 중…</div>`;
-  const [meta, map] = await Promise.all([api('/api/meta').catch(() => null), fetch('seoul-map.json').then(r => r.json()).catch(() => null), loadWeather()]);
+  // 날씨는 첫 화면을 붙잡지 않는다: 1.5초 안에 오면 같이 그리고, 늦으면 날씨 없이 열었다가 도착하면 홈을 다시 그린다
+  const wx = loadWeather();
+  const late = await Promise.race([wx.then(() => false), new Promise(r => setTimeout(() => r(true), 1500))]);
+  if (late) wx.then(() => { if (S.weather && S.tab === 'home') render(); });
+  const [meta, map] = await Promise.all([api('/api/meta').catch(() => null), fetch('seoul-map.json').then(r => r.json()).catch(() => null)]);
   S.meta = meta; S.mapData = map;
   const qs = new URLSearchParams(location.search);
   if (['home', 'near', 'cal', 'places', 'map', 'hosp', 'saved'].includes(qs.get('tab'))) S.tab = qs.get('tab');
@@ -1177,5 +1187,5 @@ new MutationObserver(syncBars).observe($('#app'), { subtree: true, attributes: t
     if (found) { S.cache.set(pid, found); openPlace(pid, false); }
   }
   if (qs.has('search')) openSearch(qs.get('search'));
-  await splash.finish();
+  closeSplash();
 })();
