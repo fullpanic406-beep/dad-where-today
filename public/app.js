@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js';
+import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js?v=20261113b';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');

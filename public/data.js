@@ -1,6 +1,6 @@
 // 구별 JSON(public/data) 로더와 필터·집계. 서버 없이 브라우저에서 처리한다.
 // 상대 경로만 쓴다 (GitHub Pages 의 /저장소이름/ 아래에서도 동작하도록).
-import { staleReason, kstNow } from './fresh.js';
+import { staleReason, kstNow } from './fresh.js?v=20261113b';
 
 const memo = new Map();
 export const clearCache = () => memo.clear(); // 당겨서 새로고침: 받아 둔 데이터를 비워 다음 요청 때 새로 받는다
