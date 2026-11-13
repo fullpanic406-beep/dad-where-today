@@ -125,7 +125,8 @@ const wxIcon = c => c === 0 ? 'sun' : c <= 2 ? 'cloudsun' : c <= 48 ? 'cloud' : 
 const PLAY_FROM = 10, PLAY_TO = 18;
 async function loadWeather() {
   try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&hourly=precipitation_probability,precipitation,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=16');
+    const ac = new AbortController(); setTimeout(() => ac.abort(), 2500);   // 날씨가 늦으면 기다리지 않고 날씨 없이 연다
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&hourly=precipitation_probability,precipitation,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=16', { signal: ac.signal });
     const j = await r.json();
     const byDay = {};
     j.hourly.time.forEach((t, i) => {
@@ -1089,23 +1090,23 @@ function startSplash() {
   const items = [...PREP].sort(() => Math.random() - 0.5).slice(0, 3).concat('오늘 갈 곳 찾는 중');
   let list, rows = [];
   const intro = (async () => {
-    await wait(250); say('kid', '아빠~ 오늘 어디가?');
-    await wait(900); say('dad', '음… 잠깐만! 챙길 게 있어');
-    await wait(900);
+    await wait(150); say('kid', '아빠~ 오늘 어디가?');
+    await wait(500); say('dad', '음… 잠깐만! 챙길 게 있어');
+    await wait(400);
     list = document.createElement('div'); list.className = 'sp-list'; chat.appendChild(list);
     for (let i = 0; i < items.length; i++) {
       const row = document.createElement('div'); row.className = 'sp-item';
       row.innerHTML = `<i class="ck"></i><span>${esc(items[i])}</span>`; list.appendChild(row); rows.push(row);
-      if (i < items.length - 1) { await wait(700); row.classList.add('done'); }
+      if (i < items.length - 1) { await wait(350); row.classList.add('done'); }
     }
   })();
   return {
     // 실제 데이터 로딩이 끝난 뒤 마지막 항목을 체크하고 닫는다
     async finish() {
-      await intro; await wait(450);
+      await intro; await wait(150);
       rows.at(-1)?.classList.add('done');
-      await wait(350); say('dad', '다 챙겼다! 출발~');
-      await wait(750);
+      await wait(200); say('dad', '다 챙겼다! 출발~');
+      await wait(450);
       el.classList.add('out'); setTimeout(() => el.remove(), 500);
     },
   };
