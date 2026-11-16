@@ -413,5 +413,60 @@
       "https://www.yjinews.com",
       "https://www.kyongbuk.co.kr"
     ]
+  },
+  {
+    "gu": "강서구",
+    "title": "전시온실 야간개장",
+    "start_date": "2026-11-13",
+    "desc": "프로그램: 밤의 온실을 둘러보고 작은 공연도 볼 수 있는 야간 특별관람이에요. 11월에는 11/13~14, 11/27~28(금·토)에 열려요.\n· 관람 시간: 18:30~20:30 (18:30 이후 자유 입장·관람)\n· 특별공연: 11/27·28 Pearl Haze(30분), 무드등 어쿠스틱(30분)\n· 예약: 서울시 공공서비스예약에서 사전 예약(선착순 300명, 1회 최대 4명). 전화·현장 구매는 안 돼요\n· 참가비: 1인 5,000원 (36개월 미만 유아 무료, 증빙서류 지참)\n· 준비물: 예약자 신분증. 야외 주제정원 입장은 포함되지 않아요\n· 오시는 길: 양천향교역 8번 출구에서 걸어서 10~15분\n문의: 서울식물원 02-783-8088, 02-2104-9796",
+    "note": "서울시 문화포털에 실린 서울식물원 안내문에서 확인했어요(2026-11-16). 예약 마감 여부는 예약 페이지에서 확인해 주세요.",
+    "sources": [
+      "https://culture.seoul.go.kr",
+      "https://botanicpark.seoul.go.kr/front/board/newsView.do?sn=20821&searchCondition=&searchKeyword=&pageIndex=1"
+    ]
+  },
+  {
+    "gu": "서초구",
+    "title": "김치의 날 X 제4회 위킴 페스티벌",
+    "start_date": "2026-11-20",
+    "set": {
+      "link": "https://www.wikim.re.kr"
+    },
+    "note": "세계김치연구소 공식 누리집의 위킴 페스티벌 안내를 연결했어요(2026-11-16). 사전등록·세부 일정은 공식 안내에서 확인해 주세요.",
+    "sources": [
+      "https://www.wikim.re.kr",
+      "https://onoffmix.com",
+      "https://www.ikw.ac.kr"
+    ]
+  },
+  {
+    "gu": "강남구",
+    "title": "보드게임페스타",
+    "start_date": "2026-11-21",
+    "set": {
+      "link": "http://boardgamefesta.com"
+    },
+    "note": "보드게임페스타 공식 누리집과 세텍 일정 안내에서 확인했어요(2026-11-16). 예매는 공식 누리집에서 확인해 주세요.",
+    "sources": [
+      "http://boardgamefesta.com",
+      "https://www.setec.or.kr"
+    ]
+  },
+  {
+    "gu": "강서구",
+    "title": "마곡위시빌리지",
+    "start_date": "2026-11-27",
+    "set": {
+      "time": "매일 17:00~23:00",
+      "place": "발산역 1번 출구 광장",
+      "link": "https://www.instagram.com/p/Dfl-WZSEf9_/"
+    },
+    "desc": "프로그램: 발산역 앞 광장이 크리스마스 마을로 꾸며지는 강서구의 겨울 행사예요. 저녁에 불이 켜져요.\n· 운영 기간: 11/27(금)~12/28(월)\n· 운영 시간: 매일 17:00~23:00\n· 점등식: 11/27(금) 18:00\n· 장소: 발산역 1번 출구 광장(마곡동 797-13)\n주최·주관: 강서구",
+    "note": "강서구청 공식 인스타그램 안내와 행사 소개 글에서 확인했어요(2026-11-16). 종료일은 구청 안내 기준 12/28이에요.",
+    "sources": [
+      "https://www.instagram.com/p/Dfl-WZSEf9_/",
+      "https://www.thewklyn.com",
+      "https://www.instagram.com/p/Dfn1rWak5o8/"
+    ]
   }
 ]
