@@ -468,5 +468,60 @@
       "https://www.thewklyn.com",
       "https://www.instagram.com/p/Dfn1rWak5o8/"
     ]
+  },
+  {
+    "gu": "중구",
+    "title": "서울빛초롱축제",
+    "start_date": "2026-12-11",
+    "set": {
+      "time": "일~목 18:00~22:00 / 금·토 18:00~23:00",
+      "fee": "무료",
+      "is_free": 1,
+      "link": "https://www.stolantern.com/",
+      "place": "청계천 일대(청계광장~삼일교)",
+      "target": "누구나"
+    },
+    "desc": "프로그램: 청계천이 빛 조형물로 가득 차는 서울 대표 겨울 빛 축제예요. 올해 18회째, 주제는 \"서울의 낭만: 빛의 교향곡\"이에요.\n· 운영 기간: 12/11(금)~1/31(일)\n· 운영 시간: 일~목 18:00~22:00, 금·토 18:00~23:00\n· 장소: 청계천 일대(청계광장~삼일교)\n· 즐길 거리: 빛 조형물 전시, 체험 프로그램\n· 요금: 무료\n문의: 02-3788-8168",
+    "note": "서울문화포털(culture.seoul.go.kr) 공식 안내에서 확인했어요(2026-11-19).",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159958&menuNo=200010",
+      "https://www.stolantern.com/"
+    ]
+  },
+  {
+    "gu": "중구",
+    "title": "서울광장 스케이트장",
+    "start_date": "2026-12-18",
+    "set": {
+      "time": "일~목 10:00~21:30 / 금·토 10:00~24:30",
+      "fee": "1회(1시간) 1,000원 (스케이트화·헬멧 대여 포함)",
+      "is_free": 0,
+      "place": "서울광장(시청역 5번 출구)",
+      "target": "누구나"
+    },
+    "desc": "프로그램: 서울광장이 해치와 함께하는 겨울 스케이트장으로 변신해요. 올해 콘셉트는 \"SEOUL ON ICE\".\n· 운영 기간: 12/18(금)~2/9(화), 54일간\n· 운영 시간: 일~목 10:00~21:30, 금·토 10:00~24:30 (12/24·12/31은 ~01:00)\n· 요금: 1회(1시간) 1,000원, 스케이트화·헬멧 대여 포함 (20인 이상 단체 30% 할인)\n· 어린이 전용 링크와 초보자 강습이 있어요\n· 해치 포토존·해치 타임, 문화공연, 겨울 먹거리와 굿즈숍\n※ 날씨·대기질에 따라 운영이 중단될 수 있어요.\n문의: 120",
+    "note": "서울문화포털(culture.seoul.go.kr) 공식 안내에서 확인했어요(2026-11-19).",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=159961&menuNo=200010"
+    ]
+  },
+  {
+    "gu": "종로구",
+    "title": "서울라이트 광화문",
+    "start_date": "2026-12-11",
+    "set": {
+      "time": "18:00~23:00",
+      "fee": "무료",
+      "is_free": 1,
+      "link": "https://www.seoullightgwanghwamun.com/",
+      "place": "광화문광장 북측",
+      "target": "누구나"
+    },
+    "desc": "프로그램: 광화문과 광화문광장을 빛과 영상으로 물들이는 미디어아트예요. 올해 작품은 \"윤슬: 시간의 수면\"이에요.\n· 운영 기간: 12/11(금)~1/10(일)\n· 운영 시간: 매일 18:00~23:00\n· 장소: 광화문광장 북측\n· 요금: 무료\n문의: 02-2133-1936",
+    "note": "서울문화포털(culture.seoul.go.kr) 공식 안내에서 확인했어요(2026-11-19).",
+    "sources": [
+      "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160015&menuNo=200010",
+      "https://www.seoullightgwanghwamun.com/"
+    ]
   }
 ]
