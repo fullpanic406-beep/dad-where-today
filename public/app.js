@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal } from './data.js?v=20261113b';
+import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal, sameProgramKey } from './data.js?v=20261124';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -190,7 +190,7 @@ function rowHtml(e) {
   return `<div class="row cat c-${catKey(e)}" data-id="${esc(e.id)}" role="button" tabindex="0">
     <div class="ph">${thumb(e)}${e.category === 'festival' ? '<span class="fest-star" title="축제" aria-label="축제">★</span>' : ''}</div>
     <div class="body">
-      <div class="badges">${catBadge(e)}${rowBadges(e)}</div>
+      <div class="badges">${catBadge(e)}${rowBadges(e)}${e.group_n ? `<span class="badge">${e.group_n}개 반</span>` : ''}</div>
       <h3>${esc(e.title)}</h3>
       <div class="meta">${whenText(e)}${e.time ? ' · ' + esc(e.time) : ''}</div>
       <div class="meta dim">${CAT[e.category] ?? '기타'} · ${esc(where(e))}</div>
@@ -351,12 +351,7 @@ async function renderHome() {
 
   // 아빠 PICK 선정 — ① 축제 우선 ② 가까운 일정 우선(이번 주말 단기 행사 → 2주 안에 시작 → 오래 진행 중) ③ 아이와 가기 좋은 순, 날짜 빠른 순
   // (예약이 끝난 행사는 제외, 최대 5개)
-  // 같은 기관·같은 날짜의 같은 프로그램인지: 제목에서 대상(유아·초등·학년·반·기수·대면 여부)만 지워 비교
-  const sameProgramKey = e => [e.gu, e.place, e.start_date, e.end_date, e.title
-    .replace(/(초등학교|초등|초|중등|중학교|중|고등|고)?\s*\d+\s*[~\-,]\s*\d+\s*학년|(초등학교|초등|초|중등|중|고등|고)\s*\d+\s*학년|[1-6]\s*학년|(저|중|고)학년|(초|중|고)\d(~\d)?/g, '')
-    .replace(/[A-Z가-힣]?[A-D]반|\d+반|(어린이|유아|초등|청소년|성인|가족)반?/g, '').replace(/\d+\s*기(?=[\s)\]>]|$)/g, '')
-    .replace(/비대면|대면|학급|단체|동반|대상/g, '')
-    .replace(/[\s\[\]()「」<>〈〉〔〕《》·\-_:：,.!?'"‘’“”~*★☆/［］]/g, '')].join('|');
+  // 같은 수업(대상·회차만 다른 것)은 data.js 의 sameProgramKey 로 비교
   const closed = e => e.status && e.status !== '접수중' && e.status !== '안내중';
   const spanDays = e => (Date.parse(e.end_date) - Date.parse(e.start_date)) / 864e5;
   const nearGroup = e => (e.start_date <= w1 && e.end_date >= w0 && spanDays(e) <= 7 ? 0 : e.start_date > w1 ? 1 : 2);

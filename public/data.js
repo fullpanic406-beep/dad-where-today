@@ -1,6 +1,6 @@
 // 구별 JSON(public/data) 로더와 필터·집계. 서버 없이 브라우저에서 처리한다.
 // 상대 경로만 쓴다 (GitHub Pages 의 /저장소이름/ 아래에서도 동작하도록).
-import { staleReason, kstNow } from './fresh.js?v=20261113b';
+import { staleReason, kstNow } from './fresh.js?v=20261124';
 
 const memo = new Map();
 export const clearCache = () => memo.clear(); // 당겨서 새로고침: 받아 둔 데이터를 비워 다음 요청 때 새로 받는다
@@ -52,14 +52,32 @@ function matches(e, p) {
   return true;
 }
 
+// 같은 기관의 같은 수업인지: 제목에서 대상(유아·초등·학년·나이·반·기수·대면 여부)과 회차(연·월)만 지워 비교한다.
+// 날짜·링크가 달라도 같은 구·같은 장소·같은 이름이면 하나로 묶는다(2026-11-24 사용자 지시).
+const programName = t => t
+  .replace(/(초등학교|초등|초|중등|중학교|중|고등|고)?\s*\d+\s*[~\-,]\s*\d+\s*학년|(초등학교|초등|초|중등|중|고등|고)\s*\d+\s*학년|[1-6]\s*학년|(저|중|고)학년|(초|중|고)\d(~\d)?/g, '')
+  .replace(/만?\s*\d+\s*세?\s*[~\-]\s*\d+\s*세|만\s*\d+\s*세|\d+\s*세\s*(이상|이하)?|\d+\s*개월/g, '')
+  .replace(/[A-Z가-힣]?[A-D]반|\d+반|(어린이|영유아|유아|미취학|아동|초등|청소년|성인|가족)반?/g, '').replace(/\d+\s*기(?=[\s)\]>]|$)/g, '')
+  .replace(/\d{2,4}\s*년|\d{1,2}\s*월|상반기|하반기/g, '')
+  .replace(/비대면|대면|학급|단체|동반|대상/g, '')
+  .replace(/[\s\[\]()「」<>〈〉〔〕《》·ㆍ\-_:：,.!?'"‘’“”~*★☆/［］]/g, '');
+export const sameProgramKey = e => { const n = programName(e.title); return [e.gu, e.place, n.length >= 4 ? n : e.title].join('|'); };
+// 정렬된 목록에서 같은 수업은 맨 앞 하나만 남기고, 몇 개가 묶였는지(group_n)를 붙인다
+export function groupSameProgram(list) {
+  const first = new Map();
+  for (const e of list) { const k = sameProgramKey(e), f = first.get(k); if (f) f.n++; else first.set(k, { e, n: 1 }); }
+  return [...first.values()].map(({ e, n }) => (n > 1 ? { ...e, group_n: n } : e));
+}
+
 export async function queryEvents(p) {
   if (p.ids) {
     const want = new Set(String(p.ids).split(',').filter(Boolean));
     return { events: (await loadAll()).filter(e => want.has(e.id)) };
   }
-  const list = (p.gu ? await loadGu(p.gu) : await loadAll()).filter(e => matches(e, p));
-  list.sort((a, b) => b.family - a.family || (b.dow ? 1 : 0) - (a.dow ? 1 : 0) || openScore(b) - openScore(a) || span(a) - span(b)
+  const all = (p.gu ? await loadGu(p.gu) : await loadAll()).filter(e => matches(e, p));
+  all.sort((a, b) => b.family - a.family || (b.dow ? 1 : 0) - (a.dow ? 1 : 0) || openScore(b) - openScore(a) || span(a) - span(b)
     || a.start_date.localeCompare(b.start_date) || a.title.localeCompare(b.title, 'ko'));
+  const list = groupSameProgram(all); // 대상·회차만 다른 같은 수업은 하나로
   return { events: list.slice(0, 200), total: list.length };
 }
 
@@ -68,13 +86,15 @@ export async function queryCalendar(p) {
   const [y, m] = p.month.split('-').map(Number);
   const last = new Date(y, m, 0).getDate(), pad = n => String(n).padStart(2, '0');
   const from = `${p.month}-01`, to = `${p.month}-${pad(last)}`;
-  const days = {};
+  const days = {}, seen = {}; // seen: 날짜별로 이미 센 수업(같은 수업의 다른 반은 한 번만 센다)
   for (const e of (await loadGu(p.gu)).filter(e => matches(e, { ...p, from, to }))) {
+    const key = sameProgramKey(e);
     const a = e.start_date < from ? from : e.start_date, b = e.end_date > to ? to : e.end_date;
     const short = span(e) <= 7 || !!e.dow;
     for (let d = Number(a.slice(8)); d <= Number(b.slice(8)); d++) {
       const k = `${p.month}-${pad(d)}`;
       if (e.dow && !(e.dow & (1 << new Date(k + 'T00:00:00').getDay()))) continue; // 운영하지 않는 요일
+      const s = (seen[k] ??= new Set()); if (s.has(key)) continue; s.add(key);
       (days[k] ??= { n: 0, s: 0, f: 0 });
       days[k].n++; days[k].f += e.family; if (short) days[k].s++;
     }
