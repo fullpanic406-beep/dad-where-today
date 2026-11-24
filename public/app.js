@@ -1,5 +1,5 @@
 // 아빠 오늘 어디가 — 모바일 웹앱 (프레임워크 없이)
-import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal, sameProgramKey } from './data.js?v=20261124';
+import { clearCache, km, loadMeta, loadWeatherFile, loadGu, queryEvents, queryCalendar, querySummary, loadDesc, queryPlaces, loadHospitals, inSeason, isSeasonal, sameProgramKey } from './data.js?v=20261124b';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -434,7 +434,7 @@ async function renderNear() {
   const xs = [], ys = [];
   for (const d of districts) if (tone(d.name)) for (const m of d.d.matchAll(/(-?[\d.]+)[ ,](-?[\d.]+)/g)) { xs.push(+m[1]); ys.push(+m[2]); }
   const pad = 14, vb = xs.length ? [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + pad * 2, Math.max(...ys) - Math.min(...ys) + pad * 2].map(v => v.toFixed(1)).join(' ') : viewBox;
-  const mini = `<div class="near-map"><svg viewBox="${vb}" style="font-size:${(xs.length ? (Math.max(...xs) - Math.min(...xs)) / 16 : 15).toFixed(1)}px" role="img" aria-label="${esc(S.gu)} 주변 지도">
+  const mini = `<div class="near-map"><svg viewBox="${vb}" style="font-size:${(xs.length ? (Math.max(...xs) - Math.min(...xs)) / 21 : 11).toFixed(1)}px" role="img" aria-label="${esc(S.gu)} 주변 지도">
     ${districts.map(d => `<path class="${tone(d.name)}" d="${d.d}" fill-rule="evenodd"/>`).join('')}
     ${districts.filter(d => tone(d.name)).map(d => `<text class="${tone(d.name)}" x="${d.cx}" y="${d.cy - 1}">${d.name.replace(/구$/, '')}<tspan class="cnt" x="${d.cx}" dy="1.1em">${cnt(d.name) ? cnt(d.name) + '건' : ''}</tspan></text>`).join('')}
   </svg></div>`;
@@ -1089,23 +1089,23 @@ function startSplash() {
   const items = [...PREP].sort(() => Math.random() - 0.5).slice(0, 3).concat('오늘 갈 곳 찾는 중');
   let list, rows = [];
   const intro = (async () => {
-    await wait(150); say('kid', '아빠~ 오늘 어디가?');
-    await wait(500); say('dad', '음… 잠깐만! 챙길 게 있어');
-    await wait(400);
+    await wait(250); say('kid', '아빠~ 오늘 어디가?');
+    await wait(900); say('dad', '음… 잠깐만! 챙길 게 있어');
+    await wait(900);
     list = document.createElement('div'); list.className = 'sp-list'; chat.appendChild(list);
     for (let i = 0; i < items.length; i++) {
       const row = document.createElement('div'); row.className = 'sp-item';
       row.innerHTML = `<i class="ck"></i><span>${esc(items[i])}</span>`; list.appendChild(row); rows.push(row);
-      if (i < items.length - 1) { await wait(350); row.classList.add('done'); }
+      if (i < items.length - 1) { await wait(700); row.classList.add('done'); }
     }
   })();
   return {
     // 실제 데이터 로딩이 끝난 뒤 마지막 항목을 체크하고 닫는다
     async finish() {
-      await intro; await wait(150);
+      await intro; await wait(450);
       rows.at(-1)?.classList.add('done');
-      await wait(200); say('dad', '다 챙겼다! 출발~');
-      await wait(450);
+      await wait(350); say('dad', '다 챙겼다! 출발~');
+      await wait(750);
       el.classList.add('out'); setTimeout(() => el.remove(), 500);
     },
   };
