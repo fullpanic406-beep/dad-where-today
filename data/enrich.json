@@ -523,5 +523,24 @@
       "https://culture.seoul.go.kr/culture/culture/cultureEvent/view.do?cultcode=160015&menuNo=200010",
       "https://www.seoullightgwanghwamun.com/"
     ]
+  },
+  {
+    "gu": "마포구",
+    "title": "2026 HUG RUN 허그런",
+    "start_date": "2026-12-05",
+    "set": {
+      "time": "07:00 집결, 08:00 출발",
+      "fee": "5km 50,000원 / 10km 60,000원",
+      "is_free": 0,
+      "link": "https://hugrun.kr/",
+      "place": "상암월드컵공원 평화의 광장"
+    },
+    "desc": "프로그램: 위기 아동을 돕는 기부 달리기 대회예요. 5km와 10km 코스가 있고, 참가비는 전액 위기 아동 후원금으로 쓰여요.\n· 일시: 12/5(토) 07:00 집결, 08:00 출발\n· 장소: 상암월드컵공원 평화의 광장\n· 요금: 5km 50,000원 / 10km 60,000원(기부금 영수증 발급 가능)\n· 신청: 레저디 앱에서 '허그런' 검색, 선착순 마감\n· 대회 2주 전부터 허그런 키트가 배송돼요.",
+    "note": "허그런 공식 신청 페이지와 대회 안내 사이트 여러 곳(kormarathon·modufest·crewhub)에서 같은 요금을 확인했어요(2026-11-24).",
+    "sources": [
+      "https://hugrun.kr/entry",
+      "https://www.kormarathon.com/races/2026-hug-run",
+      "https://modufest.com"
+    ]
   }
 ]
