@@ -44,6 +44,7 @@ jobs:
         env:
           SEOUL_API_KEY: ${{ secrets.SEOUL_API_KEY }}
           TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
+          CULTURE_INFO_KEY: ${{ secrets.CULTURE_INFO_KEY }}
         run: |
           test -n "$SEOUL_API_KEY" || { echo "::error::SEOUL_API_KEY 시크릿이 설정되지 않았습니다"; exit 1; }
           node src/ingest.js
